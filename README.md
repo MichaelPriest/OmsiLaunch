@@ -1,6 +1,6 @@
 <p align="center">
   <!-- Replace with the official OmsiLaunch horizontal logo once the asset is added to the repository -->
-  <img src="docs/assets/omsilaunch-logo.png" alt="OmsiLaunch" width="620">
+  <img src="omsilaunch-logo.png" alt="OmsiLaunch" width="620">
 </p>
 
 <p align="center">
