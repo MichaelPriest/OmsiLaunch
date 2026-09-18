@@ -182,28 +182,6 @@ Possible clients include:
 - community integrations
 - development tools
 
-## OmsiLaunch and Stadt92
-
-**Stadt92** is a separate user-facing OMSI launcher and content manager being developed within the same ecosystem.
-
-Stadt92 is expected to use OmsiLaunch as part of its underlying OMSI control infrastructure while providing many additional features of its own.
-
-The projects are intentionally separate:
-
-```text
-Stadt92
-    │
-    │ uses
-    ▼
-OmsiLaunch
-    │
-    │ controls
-    ▼
-OMSI 2
-```
-
-OmsiLaunch itself is designed to remain usable independently by other applications and community projects.
-
 ## Architecture
 
 OmsiLaunch is being built as a modular project rather than a single launcher executable.
@@ -264,7 +242,6 @@ Open development is a core part of the project:
 - community contributions welcome
 - reusable by other OMSI projects
 - no dependency on a proprietary OmsiLaunch service
-- no requirement to use Stadt92
 - no proprietary graphical client required
 
 ## Platform
