@@ -46,8 +46,11 @@ mode preserves OMSI files.
 
 ## Download
 
-Download **`OmsiLaunch-0.1.0-beta1.zip`** from the project Release page and
-extract it directly into the supported OMSI root. The package includes the
+[⬇️ Download OmsiLaunch 0.1.0-beta1](https://github.com/lmonteirotech/OmsiLaunch/releases/download/v0.1.0-beta.1/OmsiLaunch-0.1.0-beta1.zip)
+
+[SHA-256 checksum](https://github.com/lmonteirotech/OmsiLaunch/releases/download/v0.1.0-beta.1/OmsiLaunch-0.1.0-beta1.zip.sha256) · [View release notes](https://github.com/lmonteirotech/OmsiLaunch/releases/tag/v0.1.0-beta.1)
+
+Extract the package directly into the supported OMSI root. It includes the
 controller, its required dependencies, the permanent plugin closure, splash
 assets, a Release session example, and a small offline user guide.
 
@@ -62,11 +65,11 @@ reference frontend over that same API; it contains no separate OMSI logic.
 Runtime control is session-scoped, profile-validated, and uses opaque semantic
 handles rather than public native pointers.
 
-- [Public API](PUBLIC-API.md)
-- [Runtime control](RUNTIME-CONTROL.md)
+- [Public API](docs/reference/PUBLIC-API.md)
+- [Runtime control](docs/reference/RUNTIME-CONTROL.md)
 - [Capability catalog](docs/reference/beta-0.1-capabilities.md)
 - [Known limitations](docs/reference/known-limitations.md)
-- [Build profile policy](BUILD-PROFILES.md)
+- [Build profile policy](docs/reference/BUILD-PROFILES.md)
 
 ## Community and License
 
