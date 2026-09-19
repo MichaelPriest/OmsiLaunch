@@ -19,7 +19,7 @@ integrations rather than a graphical launcher.
 
 ## Beta 0.1
 
-The first public beta is **0.1.0-beta1**. It supports the exact OMSI profile
+The second public beta is **0.1.0-beta2**. It supports the exact OMSI profile
 `Omsi23004_692EBFBF`, validates the executable fingerprint before launch, and
 does not claim compatibility with unknown OMSI builds. The package and detailed
 compatibility status are documented in [`docs/`](docs/README.md).
@@ -46,9 +46,9 @@ mode preserves OMSI files.
 
 ## Download
 
-[⬇️ Download OmsiLaunch 0.1.0-beta1](https://github.com/lmonteirotech/OmsiLaunch/releases/download/v0.1.0-beta.1/OmsiLaunch-0.1.0-beta1.zip)
+[⬇️ Download OmsiLaunch 0.1.0-beta2](https://github.com/lmonteirotech/OmsiLaunch/releases/download/v0.1.0-beta.2/OmsiLaunch-0.1.0-beta2.zip)
 
-[SHA-256 checksum](https://github.com/lmonteirotech/OmsiLaunch/releases/download/v0.1.0-beta.1/OmsiLaunch-0.1.0-beta1.zip.sha256) · [View release notes](https://github.com/lmonteirotech/OmsiLaunch/releases/tag/v0.1.0-beta.1)
+[SHA-256 checksum](https://github.com/lmonteirotech/OmsiLaunch/releases/download/v0.1.0-beta.2/OmsiLaunch-0.1.0-beta2.zip.sha256) · [View release notes](https://github.com/lmonteirotech/OmsiLaunch/releases/tag/v0.1.0-beta.2)
 
 Extract the package directly into the supported OMSI root. It includes the
 controller, its required dependencies, the permanent plugin closure, splash
