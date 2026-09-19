@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations"><ProjectConfiguration Include="Debug|Win32"><Configuration>Debug</Configuration><Platform>Win32</Platform></ProjectConfiguration><ProjectConfiguration Include="Release|Win32"><Configuration>Release</Configuration><Platform>Win32</Platform></ProjectConfiguration></ItemGroup>
+  <PropertyGroup Label="Globals"><ProjectGuid>{B0000000-0000-0000-0000-000000000001}</ProjectGuid><Keyword>Win32Proj</Keyword><WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion></PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration"><ConfigurationType>DynamicLibrary</ConfigurationType><UseDebugLibraries>true</UseDebugLibraries><PlatformToolset>v145</PlatformToolset><CharacterSet>Unicode</CharacterSet></PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration"><ConfigurationType>DynamicLibrary</ConfigurationType><UseDebugLibraries>false</UseDebugLibraries><PlatformToolset>v145</PlatformToolset><WholeProgramOptimization>true</WholeProgramOptimization><CharacterSet>Unicode</CharacterSet></PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="Shared" />
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'"><Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" /></ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'"><Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" /></ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup><OutDir>$(MSBuildThisFileDirectory)..\..\artifacts\x86\$(Configuration)\</OutDir><IntDir>$(MSBuildThisFileDirectory)..\..\artifacts\obj\OmsiLaunch.Native.x86\$(Configuration)\</IntDir></PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'"><ClCompile><WarningLevel>Level3</WarningLevel><SDLCheck>true</SDLCheck><PrecompiledHeader>NotUsing</PrecompiledHeader><ConformanceMode>true</ConformanceMode></ClCompile><Link><SubSystem>Windows</SubSystem><AdditionalDependencies>d3d9.lib;%(AdditionalDependencies)</AdditionalDependencies></Link></ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'"><ClCompile><WarningLevel>Level3</WarningLevel><PrecompiledHeader>NotUsing</PrecompiledHeader><ConformanceMode>true</ConformanceMode></ClCompile><Link><SubSystem>Windows</SubSystem><AdditionalDependencies>d3d9.lib;%(AdditionalDependencies)</AdditionalDependencies></Link></ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="NativeBoundary.cpp" />
+    <ResourceCompile Include="OmsiLaunch.Native.x86.rc">
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Target Name="GenerateOmsiLaunchNativeIdentity" BeforeTargets="ResourceCompile">
+    <MakeDir Directories="$(IntDir)" />
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)..\..\tools\Write-NativeIdentityHeader.ps1&quot; -IdentityFile &quot;$(MSBuildThisFileDirectory)..\..\OmsiLaunch.Version.props&quot; -OutputPath &quot;$(IntDir)OmsiLaunch.Identity.h&quot;" />
+  </Target>
+  <ImportGroup Label="ExtensionTargets" />
+</Project>

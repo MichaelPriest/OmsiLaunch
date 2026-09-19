@@ -1,0 +1,21 @@
+artifacts/
+staging/
+bin/
+obj/
+
+# Local signing, certificate, and resource-generation material never belongs
+# in the source repository. Official icons under assets/icons remain tracked.
+*.pfx
+*.p12
+*.cer
+*.crt
+*.key
+*.snk
+*.pvk
+*.sig
+*.signed.exe
+*.manifest.tmp
+*.res.tmp
+*.rc.tmp
+signing/
+certificates/

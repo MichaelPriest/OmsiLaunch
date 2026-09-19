@@ -1,0 +1,10 @@
+{
+  "version": "0.1.0",
+  "assets": [
+    ".omsilaunch/assets/splash/PTB.bmp",
+    ".omsilaunch/assets/splash/ENG.bmp",
+    ".omsilaunch/assets/splash/FRA.bmp",
+    ".omsilaunch/assets/splash/DEU.bmp",
+    ".omsilaunch/assets/internet-textures/fixtures/black-32x32.bmp"
+  ]
+}

@@ -1,0 +1,20 @@
+<Project>
+  <PropertyGroup>
+    <OmsiLaunchComponentDescription Condition="'$(MSBuildProjectName)' == 'OmsiLaunch.Cli'">OmsiLaunch Runtime Controller</OmsiLaunchComponentDescription>
+    <OmsiLaunchComponentDescription Condition="'$(MSBuildProjectName)' == 'OmsiLaunch.Api'">OmsiLaunch API</OmsiLaunchComponentDescription>
+    <OmsiLaunchComponentDescription Condition="'$(MSBuildProjectName)' == 'OmsiLaunch.Builds.Omsi23004'">OmsiLaunch OMSI 2.3.004 Build Profile</OmsiLaunchComponentDescription>
+    <OmsiLaunchComponentDescription Condition="'$(MSBuildProjectName)' == 'OmsiLaunch.Configuration'">OmsiLaunch Configuration</OmsiLaunchComponentDescription>
+    <OmsiLaunchComponentDescription Condition="'$(MSBuildProjectName)' == 'OmsiLaunch.Content'">OmsiLaunch Content Discovery</OmsiLaunchComponentDescription>
+    <OmsiLaunchComponentDescription Condition="'$(MSBuildProjectName)' == 'OmsiLaunch.Core'">OmsiLaunch Session Core</OmsiLaunchComponentDescription>
+    <OmsiLaunchComponentDescription Condition="'$(MSBuildProjectName)' == 'OmsiLaunch.Interop'">OmsiLaunch OMSI Interop</OmsiLaunchComponentDescription>
+    <OmsiLaunchComponentDescription Condition="'$(MSBuildProjectName)' == 'OmsiLaunch.Plugin'">OmsiLaunch OMSI Plugin</OmsiLaunchComponentDescription>
+    <OmsiLaunchComponentDescription Condition="'$(MSBuildProjectName)' == 'OmsiLaunch.Process'">OmsiLaunch Process Runtime</OmsiLaunchComponentDescription>
+    <OmsiLaunchComponentDescription Condition="'$(OmsiLaunchComponentDescription)' == ''">$(AssemblyName)</OmsiLaunchComponentDescription>
+    <AssemblyTitle>$(OmsiLaunchComponentDescription)</AssemblyTitle>
+    <AssemblyDescription>$(OmsiLaunchProductComments)</AssemblyDescription>
+    <ApplicationIcon Condition="'$(OutputType)' == 'Exe' and '$(Win32Resource)' == ''">$(MSBuildThisFileDirectory)assets\icons\OmsiLaunch.ico</ApplicationIcon>
+  </PropertyGroup>
+  <Target Name="NoOmsiDeployment" BeforeTargets="Build">
+    <Error Condition="'$(OmsiDir)' != ''" Text="Automatic OMSI deployment is forbidden; use explicit installation tooling." />
+  </Target>
+</Project>

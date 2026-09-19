@@ -1,339 +1,78 @@
 <p align="center">
-  <!-- Replace with the official OmsiLaunch horizontal logo once the asset is added to the repository -->
-  <img src="omsilaunch-logo.png" alt="OmsiLaunch" width="620">
+  <img src="assets/branding/omsilaunch-logo.png" alt="OmsiLaunch" width="620">
 </p>
 
-<p align="center">
-  <strong>Session control for OMSI 2.</strong>
-</p>
-
-<p align="center">
-  Open source · Programmable · Community driven
-</p>
+<p align="center"><strong>Session control for OMSI 2.</strong></p>
+<p align="center">Open source · Programmable · Community driven</p>
 
 ---
 
 # OmsiLaunch
 
-**OmsiLaunch** is an open-source session control and orchestration layer for **OMSI 2**.
-
-It is designed to give applications, tools and automation workflows a structured way to define, prepare, start, observe and restore OMSI sessions without relying on UI automation.
-
-OmsiLaunch is **not a graphical launcher**.
-
-Instead, it provides the technical foundation that launchers, content managers, automation tools and other community projects can build upon.
+**OmsiLaunch** is an open-source programmable launch, session-management,
+and runtime-control layer for OMSI 2. It provides a public API, a functional
+CLI, an in-process OMSI plugin/runtime, and an exact-build `BuildProfile`
+boundary. It is infrastructure for launchers, tools, automation, and community
+integrations rather than a graphical launcher.
 
 > **Define the session, not the clicks.**
 
-## Project status
+## Beta 0.1
 
-> **Pre-release / repository preparation**
+The first public beta is **0.1.0-beta1**. It supports the exact OMSI profile
+`Omsi23004_692EBFBF`, validates the executable fingerprint before launch, and
+does not claim compatibility with unknown OMSI builds. The package and detailed
+compatibility status are documented in [`docs/`](docs/README.md).
 
-OmsiLaunch is currently under active development.
+OmsiLaunch supports semantic session planning with `LaunchSpec` and
+`PlanSession`, startup through `StartSession`, observed runtime control, and
+normal `StopSession`/`CloseSession` cleanup. Supported runtime capabilities are
+explicitly cataloged; experimental and unavailable capabilities are not hidden.
 
-The public repository is being prepared before the first source release. There are currently **no public binaries, packages or stable API guarantees**.
+## Safe Session Ownership
 
-The initial implementation focuses on establishing the core architecture, OMSI integration boundaries, session lifecycle and safe configuration handling before publishing a usable release.
+All launch configuration overrides are session-scoped. OmsiLaunch snapshots,
+journals, applies, verifies, and restores every temporary configuration or GUI
+file it changes. It does not offer permanent configuration editing in this beta.
 
-Development progress and technical documentation will be published here as the project reaches its first public milestones.
+Product plugin files are permanently installed under `plugins\\OmsiLaunch.*`.
+They are not copied in and removed for every session, and third-party plugins
+are never transactionally owned. `.omsilaunch\\` is an OmsiLaunch-private
+directory for assets, diagnostics, journals, and user examples.
 
-## What OmsiLaunch is for
+Managed splash presentation is the default. PTB, ENG, DEU, and FRA product
+assets are temporarily overlaid and restored exactly. Native/`Unset` splash
+mode preserves OMSI files.
 
-A normal OMSI session involves several separate pieces of state:
+## Download
 
-- OMSI installation
-- map
-- entry point
-- new, saved or last situation
-- date and time
-- player vehicle
-- repaint
-- HOF
-- fleet number
-- registration
-- OMSI options
-- input configuration
-- process lifecycle
+Download **`OmsiLaunch-0.1.0-beta1.zip`** from the project Release page and
+extract it directly into the supported OMSI root. The package includes the
+controller, its required dependencies, the permanent plugin closure, splash
+assets, a Release session example, and a small offline user guide.
 
-OmsiLaunch aims to expose these as a coherent **session definition** instead of requiring external applications to reproduce OMSI's interface workflow.
+See [Installation](docs/getting-started/installation.md) and
+[First Session](docs/getting-started/first-session.md). Use
+`OmsiLaunch.exe /version` to inspect the installed controller.
 
-Conceptually:
+## For Developers
 
-```text
-Define
-  ↓
-Prepare
-  ↓
-Launch
-  ↓
-Observe
-  ↓
-Restore
-```
+The preferred product surface is the semantic public API. The CLI is a
+reference frontend over that same API; it contains no separate OMSI logic.
+Runtime control is session-scoped, profile-validated, and uses opaque semantic
+handles rather than public native pointers.
 
-The goal is not to replace OMSI.
+- [Public API](PUBLIC-API.md)
+- [Runtime control](RUNTIME-CONTROL.md)
+- [Capability catalog](docs/reference/beta-0.1-capabilities.md)
+- [Known limitations](docs/reference/known-limitations.md)
+- [Build profile policy](BUILD-PROFILES.md)
 
-**The goal is to make OMSI controllable.**
+## Community and License
 
-## Intended capabilities
+OmsiLaunch is a community-oriented open-source project. It is independent from
+other OMSI launchers and can be consumed by compatible community tooling.
 
-### Session planning
-
-Describe an OMSI session before starting the simulator.
-
-A session may include, where supported:
-
-```text
-Map
-Entry point
-Situation
-Date
-Time
-Vehicle
-Repaint
-HOF
-Fleet number
-Registration
-Configuration overrides
-```
-
-### Controlled startup
-
-OmsiLaunch is designed to interact with OMSI's startup lifecycle directly rather than simulating mouse clicks or keyboard input.
-
-**UI automation is not part of the architecture.**
-
-### Process lifecycle
-
-Applications using OmsiLaunch are intended to manage OMSI sessions through semantic operations such as:
-
-```text
-PlanSession
-StartSession
-GetSessionStatus
-WaitSession
-StopSession
-CloseSession
-```
-
-### Content discovery
-
-OmsiLaunch is intended to provide structured discovery of installed OMSI content, including supported categories such as:
-
-```text
-Maps
-Situations
-Vehicles
-Repaints
-HOF files
-Fleet-number sources
-Registration sources
-```
-
-### Configuration handling
-
-OMSI configuration files require careful handling because they may contain settings unknown to third-party tools.
-
-OmsiLaunch is being designed around minimally destructive configuration processing, preserving unknown data whenever possible.
-
-Initial configuration targets include:
-
-```text
-options.cfg
-Inputs\keyboard.cfg
-Inputs\gamectrler.cfg
-```
-
-### Session transactions and recovery
-
-Temporary changes made for a session should not permanently alter the user's OMSI installation.
-
-The architecture therefore includes concepts such as:
-
-```text
-Installation locking
-State snapshots
-Temporary configuration
-Runtime staging
-Process monitoring
-Cleanup
-Restoration
-Crash recovery
-```
-
-The objective is simple:
-
-**prepare what the session needs, then restore what was there before.**
-
-## Designed for other applications
-
-OmsiLaunch is infrastructure.
-
-It is intended to be consumed by other software instead of imposing a single user interface.
-
-Possible clients include:
-
-- graphical launchers
-- content managers
-- command-line tools
-- server-management software
-- testing utilities
-- automation scripts
-- community integrations
-- development tools
-
-## OmsiLaunch and Stadt92
-
-**Stadt92** is a future user-facing OMSI launcher and content manager. Its official website will be [stadt92.com](https://stadt92.com).
-
-Stadt92 is planned to use OmsiLaunch as part of its OMSI session-control infrastructure while providing its own user-facing features. No stable integration is currently available or guaranteed.
-
-The projects are intentionally separate:
-
-```text
-Stadt92
-    │
-    │ planned client
-    ▼
-OmsiLaunch
-    │
-    │ controls
-    ▼
-OMSI 2
-```
-
-OmsiLaunch is designed to remain usable independently by other applications and community projects.
-
-## Architecture
-
-OmsiLaunch is being built as a modular project rather than a single launcher executable.
-
-The planned solution is divided into components responsible for areas such as:
-
-```text
-OmsiLaunch.Api
-OmsiLaunch.Core
-OmsiLaunch.Content
-OmsiLaunch.Configuration
-OmsiLaunch.Process
-OmsiLaunch.Interop
-OmsiLaunch.Plugin
-OmsiLaunch.Native.x86
-OmsiLaunch.Builds
-```
-
-OMSI itself remains a 32-bit application.
-
-The OmsiLaunch architecture separates higher-level control from OMSI-facing x86 components so that applications using the project do not need to reproduce low-level integration themselves.
-
-## OMSI integration
-
-OmsiLaunch works around the behavior and limitations of OMSI itself instead of pretending they do not exist.
-
-Its architecture is designed around:
-
-- exact OMSI build identification
-- controlled native interoperability
-- process lifecycle management
-- temporary runtime deployment
-- configuration snapshots and restoration
-- explicit capability reporting
-- structured telemetry and errors
-
-Unsupported or unverified behavior should be reported as such instead of being guessed.
-
-## OmsiHook / Omsi-Extensions
-
-OmsiLaunch builds upon knowledge and selected technical foundations from the open-source OMSI ecosystem, including **OmsiHook / Omsi-Extensions**.
-
-Reuse is intentionally selective.
-
-Low-level interoperability components may be adapted where appropriate, while OmsiLaunch maintains its own session-control architecture and public API.
-
-Provenance and licensing information for reused components will be documented alongside the source code.
-
-## Open source
-
-OmsiLaunch is an **open-source project** and is intended to follow the same open development philosophy as OmsiHook.
-
-The project will be distributed under the **GNU General Public License (GPL)**. The exact license text and version will be included in the repository before the first public source release.
-
-Open development is a core part of the project:
-
-- source available to the community
-- community contributions welcome
-- reusable by other OMSI projects
-- no dependency on a proprietary OmsiLaunch service
-- no proprietary graphical client required
-
-## Platform
-
-The initial implementation target is:
-
-```text
-Windows 10 / 11
-x64 host environment
-OMSI 2 x86
-```
-
-OMSI-facing components remain compatible with the simulator's 32-bit runtime requirements.
-
-Support for additional Windows environments may be investigated later.
-
-Platform support will be documented explicitly rather than assumed.
-
-## Documentation
-
-Project documentation will be published alongside the source code and at:
-
-**https://omsilaunch.omsimods.com.br**
-
-Planned documentation areas include:
-
-- getting started
-- architecture
-- public API
-- session specification
-- configuration
-- content discovery
-- OMSI build profiles
-- plugin architecture
-- native interoperability
-- testing and validation
-- recovery behavior
-- integration examples
-
-## Contributing
-
-OmsiLaunch is being built for the OMSI community, and contributions will be welcome once the initial public source tree is available.
-
-Contribution guidelines, coding conventions and development environment instructions will be added before the repository opens for external development.
-
-Until then, this repository serves as the public home of the project.
-
-## Project links
-
-- **Website:** https://omsilaunch.omsimods.com.br
-- **OmsiModsBR:** https://omsimods.com.br
-- **Source code:** this repository
-- **Issues:** available after the first public source release
-- **Discussions:** planned
-
-## Disclaimer
-
-OmsiLaunch is an independent community project and is not an official component of OMSI 2.
-
-OMSI 2 and related names, trademarks and assets belong to their respective owners.
-
-OmsiLaunch does not include or redistribute OMSI 2 game files.
-
----
-
-<p align="center">
-  <strong>OmsiLaunch</strong><br>
-  Session control for OMSI 2.
-</p>
-
-<p align="center">
-  Open source · Built for tools · Built for the community
-</p>
+OmsiLaunch is licensed under [LGPL-3.0-only](LICENSE). See the
+[third-party notices](THIRD-PARTY-NOTICES.md) for incorporated-source
+provenance and applicable notices.

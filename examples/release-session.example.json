@@ -1,0 +1,35 @@
+{
+  "Installation": {
+    "RootPath": ".",
+    "ExpectedExecutableSha256": null
+  },
+  "World": {
+    "Mode": 0,
+    "MapIdentity": { "Presence": 1, "Value": "maps\\Grundorf\\global.cfg" },
+    "SituationIdentity": { "Presence": 0, "Value": null },
+    "PresentedEntrypointIndex": { "Presence": 1, "Value": 1 },
+    "EntrypointIdentity": { "Presence": 0, "Value": null }
+  },
+  "Date": { "Mode": 0, "Value": { "Presence": 0, "Value": null } },
+  "Time": { "Mode": 0, "Value": { "Presence": 0, "Value": null } },
+  "PlayerVehicle": { "Presence": 0, "Value": null },
+  "Environment": {
+    "General": {}, "Advanced": {}, "Graphics": {}, "AdvancedGraphics": {},
+    "Sound": {}, "AiPassengers": {}, "Keyboard": {}, "Controllers": {}
+  },
+  "Behavior": {
+    "RestoreConfiguration": true,
+    "SuppressStaleClosecheckWarning": true,
+    "StartupTimeoutSeconds": 180,
+    "ShutdownTimeoutSeconds": 30
+  },
+  "Presentation": {
+    "Splash": 1,
+    "Language": { "Presence": 0, "Value": null },
+    "CustomAssetDirectory": { "Presence": 0, "Value": null }
+  },
+  "InternetTextures": {
+    "Mode": 0,
+    "OverrideProfilePath": { "Presence": 0, "Value": null }
+  }
+}

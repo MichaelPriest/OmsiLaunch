@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net6.0-windows</TargetFramework><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OmsiLaunch.Api\OmsiLaunch.Api.csproj" />
+    <ProjectReference Include="..\OmsiLaunch.Process\OmsiLaunch.Process.csproj" />
+    <ProjectReference Include="..\OmsiLaunch.Builds.Omsi23004\OmsiLaunch.Builds.Omsi23004.csproj" />
+    <ProjectReference Include="..\OmsiLaunch.Content\OmsiLaunch.Content.csproj" />
+    <ProjectReference Include="..\OmsiLaunch.Configuration\OmsiLaunch.Configuration.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="assets\splash\*.bmp" CopyToOutputDirectory="PreserveNewest" Link="assets\splash\%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

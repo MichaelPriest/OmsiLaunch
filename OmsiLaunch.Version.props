@@ -1,0 +1,15 @@
+<Project>
+  <!-- Authoritative, tracked product identity. Build labels and Git revisions
+       are deliberately separate from Windows product-version metadata. -->
+  <PropertyGroup>
+    <OmsiLaunchProductName>OmsiLaunch</OmsiLaunchProductName>
+    <OmsiLaunchCompanyName>LMonteiro</OmsiLaunchCompanyName>
+    <OmsiLaunchLegalCopyright>Copyright © 2026 LMonteiro</OmsiLaunchLegalCopyright>
+    <OmsiLaunchProductVersion>0.1.0-beta1</OmsiLaunchProductVersion>
+    <OmsiLaunchManagedVersion>0.1.0</OmsiLaunchManagedVersion>
+    <OmsiLaunchFileVersion>0.1.0.0</OmsiLaunchFileVersion>
+    <OmsiLaunchFileVersionCommas>0,1,0,0</OmsiLaunchFileVersionCommas>
+    <OmsiLaunchProductComments>Runtime control, session management and integration infrastructure for OMSI 2.</OmsiLaunchProductComments>
+    <OmsiLaunchPackageAlias>current</OmsiLaunchPackageAlias>
+  </PropertyGroup>
+</Project>

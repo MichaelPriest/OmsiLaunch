@@ -1,0 +1,26 @@
+<Project>
+  <Import Project="$(MSBuildThisFileDirectory)OmsiLaunch.Version.props" />
+  <PropertyGroup>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PlatformTarget Condition="'$(PlatformTarget)' == ''">x64</PlatformTarget>
+    <BaseOutputPath>$(MSBuildThisFileDirectory)artifacts\bin\$(MSBuildProjectName)\</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)artifacts\obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Version>$(OmsiLaunchManagedVersion)</Version>
+    <AssemblyVersion>$(OmsiLaunchFileVersion)</AssemblyVersion>
+    <FileVersion>$(OmsiLaunchFileVersion)</FileVersion>
+    <InformationalVersion>$(OmsiLaunchProductVersion)</InformationalVersion>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <Company>$(OmsiLaunchCompanyName)</Company>
+    <Product>$(OmsiLaunchProductName)</Product>
+    <Copyright>$(OmsiLaunchLegalCopyright)</Copyright>
+    <Description>$(OmsiLaunchProductComments)</Description>
+    <AssemblyCompany>$(OmsiLaunchCompanyName)</AssemblyCompany>
+    <AssemblyProduct>$(OmsiLaunchProductName)</AssemblyProduct>
+    <AssemblyCopyright>$(OmsiLaunchLegalCopyright)</AssemblyCopyright>
+    <AssemblyDescription>$(OmsiLaunchProductComments)</AssemblyDescription>
+  </PropertyGroup>
+</Project>

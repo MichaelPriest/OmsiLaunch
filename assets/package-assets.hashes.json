@@ -1,0 +1,22 @@
+[
+  {
+    "Path": ".omsilaunch\\assets\\internet-textures\\fixtures\\black-32x32.bmp",
+    "Sha256": "9358DD99775E5BE24E52C1F81EC55830A1AFC657C3FD4D80A7D89C1D48CFBDEF"
+  },
+  {
+    "Path": ".omsilaunch\\assets\\splash\\DEU.bmp",
+    "Sha256": "72A463A48FF9B208B2653F3B37BB3350C6357B9CDF5601FB44A94B7EA708BDA5"
+  },
+  {
+    "Path": ".omsilaunch\\assets\\splash\\ENG.bmp",
+    "Sha256": "9228D1007CFA9A21E652AA242AD52928E5497C8054DF3ADFE26CC7D49033C6AD"
+  },
+  {
+    "Path": ".omsilaunch\\assets\\splash\\FRA.bmp",
+    "Sha256": "1F815AE5E2BFC53A26E3BDEA03EB04606BCB0344982CE446875CD2B9063E6061"
+  },
+  {
+    "Path": ".omsilaunch\\assets\\splash\\PTB.bmp",
+    "Sha256": "56D9B9711886673F74E90CBDA79D620BF0DABBBD2469F10282D137727C389CF3"
+  }
+]
