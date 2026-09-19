@@ -1,11 +1,18 @@
+> Zlokalizowane tłumaczenie. W przypadku różnic technicznych obowiązuje kanoniczna dokumentacja angielska.
+
 # Pierwsza sesja
 
-W katalogu głównym OMSI sprawdź przenośny przykład Release przed uruchomieniem:
+W katalogu głównym OMSI przejrzyj przykładową wersję przenośną przed uruchomieniem OMSI:
 
-```powershell
+```powłoka mocy
 .\OmsiLaunch.exe /spec:.\.omsilaunch\examples\release-session.example.json /plan /json
 ```
 
-`RootPath: "."` oznacza folder zawierający `OmsiLaunch.exe`. Usuń `/plan`, aby
-uruchomić sesję. Zarządzany splash jest domyślny; `Native` i `Unset` zachowują
-oryginalny splash OMSI.
+`RootPath: "."` w spakowanym przykładzie oznacza katalog zawierający
+`OmsiLaunch.exe`. Rozpocznij tę samą sesję, pomijając `/plan`.
+
+Zarządzana prezentacja powitalna jest domyślna. OmsiLaunch tymczasowo używa swojego
+Zasób powitalny PTB, ENG, DEU lub FRA i przywraca oryginalne pliki OMSI
+normalne zatrzymanie, nieudane uruchomienie lub trwałe odzyskiwanie. `/splash:Native` i
+`/splash:Unset` zachowuje oryginalny wygląd OMSI.
+

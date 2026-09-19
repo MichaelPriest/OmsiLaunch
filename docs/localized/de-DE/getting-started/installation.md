@@ -1,13 +1,16 @@
+> Lokalisierte Übersetzung. Bei technischen Abweichungen gilt die kanonische englische Dokumentation.
+
 # Installation
 
-Entpacken Sie `OmsiLaunch-0.1.0-beta1.zip` direkt in das Stammverzeichnis der
-unterstützten OMSI-Installation. Das Paket installiert `OmsiLaunch.exe` und
-Controller-Abhängigkeiten im Stammverzeichnis sowie permanente Produktdateien
-unter `plugins\`.
+„OmsiLaunch-0.1.0-beta1.zip“ wird direkt in das unterstützte OMSI extrahiert
+Installationsstammverzeichnis. Es installiert „OmsiLaunch.exe“ und Controller-Abhängigkeiten unter
+das Stammverzeichnis und der permanente produkteigene Plugin-Abschluss unter „Plugins“.
 
-`.omsilaunch\` ist der private OmsiLaunch-Ordner für Assets, Diagnosen und das
-temporäre Journal. Verschieben Sie keine Plugin-Binärdateien dorthin.
-Drittanbieter-Plugins gehören nicht zu OmsiLaunch-Transaktionen.
+Das Verzeichnis „.omsilaunch\“ ist im privaten OmsiLaunch-Status. Es enthält Produkt
+Assets, Diagnosen, Sitzungsprotokolle, während die Wiederherstellung aussteht, und die kleinen
+Offline-Dokumentation/Beispielset. Verschieben Sie keine Plugin-Binärdateien hinein.
 
-Unterstützt wird `Omsi23004_692EBFBF`; unbekannte OMSI-Programme werden vor
-dem Start abgelehnt.
+Nur „OmsiLaunch.*“-Dateien sind Eigentum des Produkts. Drittanbieter-Plugins bleiben außen vor
+OmsiLaunch-Transaktionseigentum. Das aktuell unterstützte ausführbare Profil ist
+`Omsi23004_692EBFBF`; Eine unbekannte ausführbare OMSI-Datei wird vor dem Start abgelehnt.
+

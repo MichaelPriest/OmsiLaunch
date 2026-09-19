@@ -1,11 +1,18 @@
-# Primeira sessão
+> Tradução localizada. A documentação canônica em inglês prevalece quando houver divergência técnica.
 
-Na raiz do OMSI, examine o exemplo Release portátil antes de iniciar o jogo:
+# Primeira Sessão
 
-```powershell
+Na raiz do OMSI, inspecione um exemplo de versão portátil antes de iniciar o OMSI:
+
+```PowerShell
 .\OmsiLaunch.exe /spec:.\.omsilaunch\examples\release-session.example.json /plan /json
 ```
 
-No exemplo, `RootPath: "."` significa o diretório que contém
-`OmsiLaunch.exe`. Remova `/plan` para iniciar a sessão. A splash gerenciada é o
-comportamento padrão; `Native` e `Unset` preservam a splash original do OMSI.
+`RootPath: "."` no exemplo empacotado resolve para o diretório que contém
+`OmsiLaunch.exe`. Inicie a mesma sessão omitindo `/plan`.
+
+A apresentação inicial gerenciada é o padrão. OmsiLaunch usa temporariamente seu
+Ativo inicial PTB, ENG, DEU ou FRA e restaura os arquivos OMSI originais em
+parada normal, falha na inicialização ou recuperação durável. `/splash:Nativo` e
+`/splash:Unset` preserva o splash original do OMSI.
+

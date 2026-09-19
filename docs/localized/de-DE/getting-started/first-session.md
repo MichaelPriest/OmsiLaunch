@@ -1,11 +1,18 @@
+> Lokalisierte Übersetzung. Bei technischen Abweichungen gilt die kanonische englische Dokumentation.
+
 # Erste Sitzung
 
-Prüfen Sie im OMSI-Stammverzeichnis zuerst das portable Release-Beispiel:
+Überprüfen Sie im OMSI-Stammverzeichnis ein portables Release-Beispiel, bevor Sie OMSI starten:
 
-```powershell
+„Powershell
 .\OmsiLaunch.exe /spec:.\.omsilaunch\examples\release-session.example.json /plan /json
-```
+„
 
-`RootPath: "."` bezeichnet den Ordner mit `OmsiLaunch.exe`. Entfernen Sie
-`/plan`, um die Sitzung zu starten. Die verwaltete Splash-Anzeige ist Standard;
-`Native` und `Unset` erhalten die OMSI-Originaldatei.
+„RootPath: „.““ im gepackten Beispiel wird in das Verzeichnis aufgelöst, das Folgendes enthält
+„OmsiLaunch.exe“. Starten Sie dieselbe Sitzung, indem Sie „/plan“ weglassen.
+
+Die verwaltete Splash-Präsentation ist die Standardeinstellung. OmsiLaunch verwendet vorübergehend seine
+PTB-, ENG-, DEU- oder FRA-Splash-Asset und stellt die ursprünglichen OMSI-Dateien wieder her
+normaler Stopp, fehlgeschlagener Start oder dauerhafte Wiederherstellung. `/splash:Native` und
+`/splash:Unset` behält den ursprünglichen OMSI-Splash bei.
+

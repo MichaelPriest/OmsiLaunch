@@ -1,13 +1,16 @@
+> Tradução localizada. A documentação canônica em inglês prevalece quando houver divergência técnica.
+
 # Instalação
 
-Extraia `OmsiLaunch-0.1.0-beta1.zip` diretamente na raiz da instalação OMSI
-compatível. O pacote instala `OmsiLaunch.exe` e dependências do controller na
-raiz, além dos arquivos permanentes do produto em `plugins\`.
+`OmsiLaunch-0.1.0-beta1.zip` é extraído diretamente no OMSI suportado
+raiz de instalação. Ele instala `OmsiLaunch.exe` e dependências do controlador em
+a raiz e o fechamento permanente do plugin de propriedade do produto em `plugins\`.
 
-`.omsilaunch\` é o diretório privado do OmsiLaunch para assets, diagnósticos e
-journal temporário. Não mova os binários do plugin para esse diretório. Apenas
-arquivos `OmsiLaunch.*` pertencem ao produto; plugins de terceiros não são
-alterados por transações do OmsiLaunch.
+O diretório `.omsilaunch\` é um estado privado do OmsiLaunch. Contém produto
+ativos, diagnósticos, diários de sessão enquanto a recuperação está pendente e o pequeno
+conjunto de documentação/exemplo offline. Não mova binários de plugins para ele.
 
-O perfil suportado nesta beta é `Omsi23004_692EBFBF`. Executáveis OMSI sem
-perfil conhecido são rejeitados antes da inicialização.
+Apenas os arquivos `OmsiLaunch.*` são de propriedade do produto. Plug-ins de terceiros permanecem de fora
+Propriedade da transação OmsiLaunch. O perfil executável atualmente suportado é
+`Omsi23004_692EBFBF`; um executável OMSI desconhecido é rejeitado antes do lançamento.
+
