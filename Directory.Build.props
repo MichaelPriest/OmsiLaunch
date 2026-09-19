@@ -10,7 +10,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <Version>$(OmsiLaunchManagedVersion)</Version>
-    <AssemblyVersion>$(OmsiLaunchFileVersion)</AssemblyVersion>
+    <AssemblyVersion>$(OmsiLaunchAssemblyVersion)</AssemblyVersion>
     <FileVersion>$(OmsiLaunchFileVersion)</FileVersion>
     <InformationalVersion>$(OmsiLaunchProductVersion)</InformationalVersion>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>

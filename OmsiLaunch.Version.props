@@ -7,6 +7,7 @@
     <OmsiLaunchLegalCopyright>Copyright © 2026 LMonteiro</OmsiLaunchLegalCopyright>
     <OmsiLaunchProductVersion>0.1.0-beta1</OmsiLaunchProductVersion>
     <OmsiLaunchManagedVersion>0.1.0</OmsiLaunchManagedVersion>
+    <OmsiLaunchAssemblyVersion>1.0.0.0</OmsiLaunchAssemblyVersion>
     <OmsiLaunchFileVersion>0.1.0.0</OmsiLaunchFileVersion>
     <OmsiLaunchFileVersionCommas>0,1,0,0</OmsiLaunchFileVersionCommas>
     <OmsiLaunchProductComments>Runtime control, session management and integration infrastructure for OMSI 2.</OmsiLaunchProductComments>

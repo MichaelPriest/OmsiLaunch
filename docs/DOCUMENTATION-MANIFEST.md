@@ -26,7 +26,7 @@ This manifest is the source map for the Beta 0.1 documentation phase. It does no
 | `guides/d3d-textures.md` | Texture lifecycle and reset limits | Developers | `D3DRuntimeApi.cs`, Wave D report | READY_TO_WRITE |
 | `guides/diagnostics.md`, `guides/recovery.md` | Evidence collection and safe recovery | Users, developers | host trace, journal/recovery implementation | READY_TO_WRITE |
 | `reference/beta-0.1-capabilities.md` | Definitive Beta capability catalog | Users, developers | current code and regression artifacts | READY |
-| `localized/<locale>/` | Localized entry documentation | Users | Canonical English guides | READY_FOR_EXPANSION |
+| `localized/<locale>/` | Complete localized public-documentation mirror | Users, developers | Canonical English public documentation | LOCALIZED_PUBLIC_SURFACE |
 | `reference/known-limitations.md` | Explicit Beta boundaries | Users, developers | readiness report and parity reports | READY |
 | `reference/compatibility-matrix.md`, `reference/errors.md` | Build and error references | Developers | profile/capability/error sources | READY_TO_WRITE |
 | `reference/omsihook-parity.md` | Engineering parity tracking | Engineers | `third_party/OMSIHOOK-REUSE-MATRIX.md`, Wave reports | INTERNAL_ONLY |

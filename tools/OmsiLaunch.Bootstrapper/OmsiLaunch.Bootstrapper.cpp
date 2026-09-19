@@ -5,8 +5,6 @@
 #include <string>
 #include <vector>
 
-using hostfxr_main_fn = int(__cdecl*)(int argc, const wchar_t** argv);
-
 int wmain(int argc, wchar_t** argv)
 {
     wchar_t executablePath[MAX_PATH] = {};
@@ -38,23 +36,39 @@ int wmain(int argc, wchar_t** argv)
     {
         return 4;
     }
-    const auto hostfxrMain = reinterpret_cast<hostfxr_main_fn>(GetProcAddress(hostfxr, "hostfxr_main"));
-    if (hostfxrMain == nullptr)
+    const auto initializeForCommandLine = reinterpret_cast<hostfxr_initialize_for_dotnet_command_line_fn>(
+        GetProcAddress(hostfxr, "hostfxr_initialize_for_dotnet_command_line"));
+    const auto runApp = reinterpret_cast<hostfxr_run_app_fn>(GetProcAddress(hostfxr, "hostfxr_run_app"));
+    const auto closeHostContext = reinterpret_cast<hostfxr_close_fn>(GetProcAddress(hostfxr, "hostfxr_close"));
+    if (initializeForCommandLine == nullptr || runApp == nullptr || closeHostContext == nullptr)
     {
         FreeLibrary(hostfxr);
         return 5;
     }
 
+    // The command-line initializer takes the managed assembly first and passes
+    // only the remaining values to its managed Main method. This keeps the
+    // controller path out of the public CLI argument list.
     std::vector<const wchar_t*> hostArguments;
-    hostArguments.reserve(static_cast<size_t>(argc) + 1);
-    hostArguments.push_back(executablePath);
+    hostArguments.reserve(static_cast<size_t>(argc));
     hostArguments.push_back(controller.c_str());
     for (auto index = 1; index < argc; ++index)
     {
         hostArguments.push_back(argv[index]);
     }
 
-    const auto exitCode = hostfxrMain(static_cast<int>(hostArguments.size()), hostArguments.data());
+    hostfxr_initialize_parameters parameters = {};
+    parameters.size = sizeof(parameters);
+    parameters.host_path = executablePath;
+    hostfxr_handle context = nullptr;
+    if (initializeForCommandLine(static_cast<int>(hostArguments.size()), hostArguments.data(), &parameters, &context) != 0 || context == nullptr)
+    {
+        FreeLibrary(hostfxr);
+        return 6;
+    }
+
+    const auto exitCode = runApp(context);
+    closeHostContext(context);
     FreeLibrary(hostfxr);
     return exitCode;
 }

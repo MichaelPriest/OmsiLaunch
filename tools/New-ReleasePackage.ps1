@@ -69,6 +69,15 @@ foreach ($document in @(
     Copy-Item -LiteralPath (Join-Path $root $document.Source) -Destination (Join-Path $stage ('.omsilaunch\docs\' + $document.Destination))
 }
 
+foreach ($locale in @('pt-BR', 'de-DE', 'fr-FR', 'pl-PL')) {
+    $localizedSource = Join-Path $root ('docs\localized\' + $locale)
+    if (Test-Path -LiteralPath $localizedSource) {
+        $localizedDestination = Join-Path $stage ('.omsilaunch\docs\localized\' + $locale)
+        New-Item -ItemType Directory -Path $localizedDestination -Force | Out-Null
+        Copy-Item -Path (Join-Path $localizedSource '*') -Destination $localizedDestination -Recurse -Force
+    }
+}
+
 $files = Get-ChildItem -LiteralPath $stage -File -Recurse | ForEach-Object {
     [ordered]@{
         path = $_.FullName.Substring($stage.Length + 1).Replace('\', '/')
