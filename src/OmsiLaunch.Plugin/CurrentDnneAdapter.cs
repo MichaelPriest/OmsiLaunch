@@ -42,7 +42,7 @@ public static class CurrentDnneAdapter
 
     private static void ScheduleOnUiThread(Action action)
     {
-        pending = action; runtimePolling = false; timer = SetTimer(0, 0, 1, TimerCallback);
+        pending = action; runtimePolling = false; timer = SetTimer(0, 0, 75, TimerCallback);
     }
     private static Action? pending;
     private static void OnTimer(nint window, uint message, nuint id, uint time)
