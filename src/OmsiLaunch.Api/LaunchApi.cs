@@ -71,7 +71,12 @@ public sealed record SessionPresentationSpec(SplashMode Splash = SplashMode.Mana
 public sealed record InternetTexturesSpec(InternetTexturesMode Mode = InternetTexturesMode.Native, OptionalValue<string> OverrideProfilePath = default);
 // Large maps and native saved situations can legitimately require more than one minute
 // before they reach gameplay. Callers may still choose a tighter bounded timeout.
-public sealed record LaunchBehaviorSpec(bool RestoreConfiguration = true, bool SuppressStaleClosecheckWarning = true, int StartupTimeoutSeconds = 180, int ShutdownTimeoutSeconds = 30);
+public sealed record LaunchBehaviorSpec(
+    bool RestoreConfiguration = true,
+    bool SuppressStaleClosecheckWarning = true,
+    int StartupTimeoutSeconds = 180,
+    int ShutdownTimeoutSeconds = 30,
+    bool ContinueWaitingOnStartupTimeout = false);
 public sealed record LaunchSpec(InstallationSpec Installation, WorldSpec World, DateSpec Date, TimeSpec Time, OptionalValue<PlayerVehicleSpec> PlayerVehicle, EnvironmentSpec Environment, LaunchBehaviorSpec Behavior, YearSpec? Year = null, WeatherSpec? Weather = null, InputSpec? Input = null, DiagnosticsSpec? Diagnostics = null, SessionPresentationSpec? Presentation = null, InternetTexturesSpec? InternetTextures = null)
 {
     public YearSpec EffectiveYear => Year ?? new(DateTimeMode.Unset, OptionalValue<int>.Unset);
