@@ -32,6 +32,7 @@ function Resolve-ManagedOutput([string] $ProjectName, [string] $Platform, [strin
 
 $cli = Resolve-ManagedOutput 'OmsiLaunch.Cli' 'x64' 'net6.0-windows'
 $gui = Resolve-ManagedOutput 'OmsiLaunch.Gui' 'x64' 'net6.0-windows'
+$guiPublished = Join-Path $root "artifacts\publish\OmsiLaunch.Gui\win-x64"
 $bootstrapper = Join-Path $root "artifacts\bin\OmsiLaunch.Bootstrapper\$Configuration\OmsiLaunch.exe"
 $netHost = Join-Path $root "artifacts\bin\OmsiLaunch.Bootstrapper\$Configuration\nethost.dll"
 $plugin = Join-Path $root "artifacts\bin\OmsiLaunch.Plugin\x86\$Configuration\net6.0-windows"
@@ -43,8 +44,7 @@ $cliFiles = @(
     'OmsiLaunch.Core.dll', 'OmsiLaunch.Process.dll', 'OmsiLaunch.Builds.Omsi23004.dll'
 )
 $guiFiles = @(
-    'OmsiLaunch.Launcher.exe', 'OmsiLaunch.Launcher.dll',
-    'OmsiLaunch.Launcher.deps.json', 'OmsiLaunch.Launcher.runtimeconfig.json'
+    'OmsiLaunch.Launcher.exe'
 )
 
 if (-not (Test-Path -LiteralPath $bootstrapper)) { throw "Required controller bootstrapper missing: $bootstrapper" }
@@ -63,7 +63,8 @@ foreach ($file in $cliFiles) {
     Copy-Item -LiteralPath $source -Destination (Join-Path $stage $file)
 }
 foreach ($file in $guiFiles) {
-    $source = Join-Path $gui $file
+    $publishedSource = Join-Path $guiPublished $file
+    $source = if (Test-Path -LiteralPath $publishedSource) { $publishedSource } else { Join-Path $gui $file }
     if (-not (Test-Path -LiteralPath $source)) { throw "Required GUI artifact missing: $source" }
     Copy-Item -LiteralPath $source -Destination (Join-Path $stage $file)
 }
