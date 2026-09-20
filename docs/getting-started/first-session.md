@@ -15,12 +15,14 @@ normal stop, failed startup, or durable recovery. `/splash:Native` and
 `/splash:Unset` preserve the original OMSI splash.
 
 
-For a standalone/manual installation, the controller can live elsewhere and
-receive the OMSI executable explicitly:
+For a standalone/manual installation, invoke the installed controller with the
+OMSI executable explicitly when you do not want to rely on a Steam-library
+location:
 
 ```powershell
 .\OmsiLaunch.exe /exe:"D:\Games\OMSI 2\Omsi.exe" /new /map:"maps\Grundorf\global.cfg" /entrypoint-index:1 /plan /json
 ```
 
-Remove `/plan` after the plan reports `READY`. An unsupported executable
+The normal OmsiLaunch plugin closure must still be installed under that OMSI
+root. Remove `/plan` after the plan reports `READY`. An unsupported executable
 fingerprint is rejected before the OMSI process is created.
