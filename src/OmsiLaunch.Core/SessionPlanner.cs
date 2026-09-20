@@ -51,7 +51,7 @@ public sealed class SessionPlanner
                 var map = catalog.ResolveMap(spec.World.MapIdentity.Value!); resolved.Add(new(map.Identity, "map", map.DisplayName)); Require("world.new-map", true, "native NEW_MAP pipeline", required, diagnostics, "");
                 if (spec.World.EntrypointIdentity.IsSet) RequireOptional("world.entrypoint-identity", true, false, "RUNTIME_PARTIAL", "A raw entrypoint label is not a unique canonical identity and its presented-list correlation is not yet closed.", unsupported, diagnostics);
                 else Require("world.presented-entrypoint", spec.World.PresentedEntrypointIndex.IsSet, "presented-index entrypoint selection", required, diagnostics, "OL_E_ENTRYPOINT_REQUIRED");
-                Require("boot.headless-start", true, "synchronous Start hook", required, diagnostics, "");
+                Require(planBootCapability(spec), true, spec.Behavior.HeadlessStart ? "synchronous Start hook" : "visible Start-form assisted launch", required, diagnostics, "");
             }
             catch (FileNotFoundException) { Require("content.map", false, "requested map identity", required, diagnostics, "OL_E_MAP_NOT_FOUND"); }
         }
@@ -115,6 +115,9 @@ public sealed class SessionPlanner
         return Task.FromResult(new SessionPlan(Guid.NewGuid(), Omsi23004.ProfileIdentity, spec, detected, resolved, touched, artifacts, required, unsupported, mutations, diagnostics, diagnostics.Count == 0));
     }
 
+    private static string planBootCapability(LaunchSpec spec) =>
+        spec.Behavior.HeadlessStart ? "boot.headless-start" : "boot.visible-start";
+
     private static void Require(string name, bool available, string reason, List<Capability> required, List<LaunchDiagnostic> diagnostics, string code)
     {
         required.Add(new(name, available, available ? "STATICALLY_VALIDATED" : "UNAVAILABLE", reason));
@@ -133,7 +136,7 @@ public sealed class SessionPlanner
                 catch (FileNotFoundException) { Require("content.situation-map", false, "map referenced by the selected .osn", required, diagnostics, "OL_E_SITUATION_MAP_NOT_FOUND"); }
             }
             Require("world.saved-situation", true, "profiled Start-form situation selection and Button1Click", required, diagnostics, "");
-            Require("boot.headless-start", true, "synchronous Start hook", required, diagnostics, "");
+            Require(planBootCapability(spec), true, spec.Behavior.HeadlessStart ? "synchronous Start hook" : "visible Start-form assisted launch", required, diagnostics, "");
         }
         catch (FileNotFoundException)
         {
