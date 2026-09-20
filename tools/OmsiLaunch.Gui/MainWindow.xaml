@@ -48,7 +48,7 @@
                 <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Executável do OMSI"/>
                 <TextBox x:Name="ExecutablePathTextBox" Grid.Row="0" Grid.Column="1" Margin="0,0,10,0"
                          VerticalContentAlignment="Center"/>
-                <Button Grid.Row="0" Grid.Column="2" Content="Procurar..." Click="BrowseExecutable_Click"/>
+                <Button x:Name="BrowseExecutableButton" Grid.Row="0" Grid.Column="2" Content="Procurar..." Click="BrowseExecutable_Click"/>
 
                 <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Modo de abertura"/>
                 <ComboBox x:Name="LaunchModeComboBox" Grid.Row="2" Grid.Column="1" SelectedIndex="0"
@@ -56,7 +56,7 @@
                     <ComboBoxItem Content="Novo mapa"/>
                     <ComboBoxItem Content="Situação salva"/>
                 </ComboBox>
-                <Button Grid.Row="2" Grid.Column="2" Content="Atualizar" Click="RefreshContent_Click"/>
+                <Button x:Name="RefreshContentButton" Grid.Row="2" Grid.Column="2" Content="Atualizar" Click="RefreshContent_Click"/>
 
                 <TextBlock x:Name="ContentLabel" Grid.Row="4" Grid.Column="0" VerticalAlignment="Center" Text="Mapa"/>
                 <ComboBox x:Name="ContentComboBox" Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2"
