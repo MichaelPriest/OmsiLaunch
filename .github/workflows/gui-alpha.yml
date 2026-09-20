@@ -1,0 +1,80 @@
+name: GUI Alpha
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 6
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 6.0.x
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Restore managed projects
+        shell: pwsh
+        run: dotnet restore OmsiLaunch.sln
+
+      - name: Install private .NET 6 runtime x86
+        shell: pwsh
+        run: |
+          $script = Join-Path $env:RUNNER_TEMP 'dotnet-install.ps1'
+          Invoke-WebRequest https://dot.net/v1/dotnet-install.ps1 -OutFile $script
+          & $script -Runtime dotnet -Version 6.0.36 -Architecture x86 -InstallDir artifacts/runtime/win-x86
+          if (-not (Test-Path 'artifacts/runtime/win-x86/dotnet.exe')) { throw 'Private x86 runtime was not installed.' }
+
+
+      - name: Build native OMSI bridge x86
+        shell: pwsh
+        run: msbuild src/OmsiLaunch.Native.x86/OmsiLaunch.Native.x86.vcxproj /m /p:Configuration=Release /p:Platform=Win32
+
+      - name: Build controller bootstrapper x64
+        shell: pwsh
+        run: msbuild tools/OmsiLaunch.Bootstrapper/OmsiLaunch.Bootstrapper.vcxproj /m /p:Configuration=Release /p:Platform=x64
+
+      - name: Build CLI x64
+        shell: pwsh
+        run: dotnet build tools/OmsiLaunch.Cli/OmsiLaunch.Cli.csproj -c Release -p:Platform=x64 --no-restore
+
+      - name: Publish graphical launcher self-contained x64
+        shell: pwsh
+        run: >
+          dotnet publish tools/OmsiLaunch.Gui/OmsiLaunch.Gui.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:Platform=x64
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:DebugType=None
+          -p:DebugSymbols=false
+          -o artifacts/publish/OmsiLaunch.Gui/win-x64
+
+      - name: Build OMSI plugin x86
+        shell: pwsh
+        run: dotnet build src/OmsiLaunch.Plugin/OmsiLaunch.Plugin.csproj -c Release -p:Platform=x86 --no-restore
+
+      - name: Package alpha
+        shell: pwsh
+        run: ./tools/New-ReleasePackage.ps1 -Configuration Release
+
+      - name: Upload alpha package
+        uses: actions/upload-artifact@v4
+        with:
+          name: OmsiLaunch-GUI-alpha
+          path: |
+            artifacts/release/OmsiLaunch-*.zip
+            artifacts/release/OmsiLaunch-*.zip.sha256
+          if-no-files-found: error

@@ -158,11 +158,20 @@ public sealed class OmsiLaunchService : IOmsiLaunch
             if (plan.Spec.Behavior.SuppressStaleClosecheckWarning) RemoveStaleClosecheck(plan.Spec.Installation.RootPath, session);
             session.Move(SessionState.Snapshotting); session.Move(SessionState.ApplyingConfiguration); await transaction.ApplyAsync(cancellationToken).ConfigureAwait(false);
             session.Move(SessionState.DeployingRuntime); await transaction.MarkStateAsync(TransactionState.RuntimeDeployed, cancellationToken).ConfigureAwait(false); trace.Write("PERMANENT_RUNTIME_READY");
-            handoff = CurrentStartupHandoffStore.Create(new StartupHandoff(plan.SessionId, plan.BuildProfileId, plan.Spec.World.Mode, plan.Spec.World.MapIdentity.Value ?? string.Empty, plan.Spec.World.PresentedEntrypointIndex.IsSet ? plan.Spec.World.PresentedEntrypointIndex.Value : -1, true, plan.Spec.PlayerVehicle.IsSet, plan.Spec.Date.Mode, plan.Spec.Time.Mode, plan.Spec.World.EntrypointIdentity.IsSet ? plan.Spec.World.EntrypointIdentity.Value! : string.Empty, plan.Spec.World.SituationIdentity.IsSet ? plan.Spec.World.SituationIdentity.Value! : string.Empty));
+            handoff = CurrentStartupHandoffStore.Create(new StartupHandoff(plan.SessionId, plan.BuildProfileId, plan.Spec.World.Mode, plan.Spec.World.MapIdentity.Value ?? string.Empty, plan.Spec.World.PresentedEntrypointIndex.IsSet ? plan.Spec.World.PresentedEntrypointIndex.Value : -1, plan.Spec.Behavior.HeadlessStart, plan.Spec.PlayerVehicle.IsSet, plan.Spec.Date.Mode, plan.Spec.Time.Mode, plan.Spec.World.EntrypointIdentity.IsSet ? plan.Spec.World.EntrypointIdentity.Value! : string.Empty, plan.Spec.World.SituationIdentity.IsSet ? plan.Spec.World.SituationIdentity.Value! : string.Empty));
             telemetry = CurrentTelemetryStore.Create(plan.SessionId);
             runtime = CurrentRuntimeCommandStore.Create(plan.SessionId);
             session.Move(SessionState.CreatingStartupHandoff); await transaction.MarkStateAsync(TransactionState.HandoffCreated, cancellationToken).ConfigureAwait(false); trace.Write("HANDOFF_CREATED");
             var environment = new Dictionary<string, string> { ["OMSILAUNCH_SESSION_ID"] = plan.SessionId.ToString("D"), ["OMSILAUNCH_HANDOFF_NAME"] = handoff.Name, ["OMSILAUNCH_TELEMETRY_NAME"] = telemetry.Name, ["OMSILAUNCH_RUNTIME_CHANNEL"] = runtime.Name, ["OMSILAUNCH_INTERNET_TEXTURES_MODE"] = plan.Spec.EffectiveInternetTextures.Mode.ToString() };
+            var privateX86Runtime = Path.Combine(plan.Spec.Installation.RootPath, ".omsilaunch", "runtime", "win-x86");
+            if (Directory.Exists(privateX86Runtime))
+            {
+                environment["DOTNET_ROOT_X86"] = privateX86Runtime;
+                environment["DOTNET_ROOT(x86)"] = privateX86Runtime;
+                environment["DOTNET_MULTILEVEL_LOOKUP"] = "0";
+                trace.Write("PRIVATE_X86_DOTNET_RUNTIME_SELECTED", privateX86Runtime);
+            }
+            else trace.Write("PRIVATE_X86_DOTNET_RUNTIME_NOT_FOUND", privateX86Runtime);
             session.Move(SessionState.StartingProcess); trace.Write("PROCESS_CREATE_ENTER");
             var process = await platform.StartAsync(new StartupProcessRequest(Path.Combine(plan.Spec.Installation.RootPath, "Omsi.exe"), plan.Spec.Installation.RootPath, environment), plan.BuildProfileId, cancellationToken).ConfigureAwait(false);
             trace.Write("PROCESS_CREATE_RETURN", process.ProcessId.ToString()); session.Attach(process); trace.Write("PROCESS_OWNERSHIP_REGISTERED"); await transaction.RecordProcessAsync(process.Identity.ProcessId, process.Identity.CreationTimeUtc, process.Identity.ExecutablePath, cancellationToken).ConfigureAwait(false); trace.Write("JOURNAL_PROCESS_STARTED"); session.Move(SessionState.WaitingForPlugin);
@@ -184,6 +193,7 @@ public sealed class OmsiLaunchService : IOmsiLaunch
         {
             trace.Write("SUPERVISOR_ENTER");
             var deadline = DateTimeOffset.UtcNow.AddSeconds(plan.Spec.Behavior.StartupTimeoutSeconds);
+            var startupTimeoutReported = false;
             string? lastTelemetry = null;
             while (!platform.HasExited(process) && !session.StopRequested)
             {
@@ -197,8 +207,25 @@ public sealed class OmsiLaunchService : IOmsiLaunch
                 if (session.State == SessionState.Failed) break;
                 if (session.State != SessionState.Running && DateTimeOffset.UtcNow >= deadline)
                 {
-                    session.Fail(session.PluginStarted ? "OL_E_STARTUP_TIMEOUT" : "OL_E_PLUGIN_NOT_LOADED", "The requested semantic startup state was not reached before the timeout.");
-                    break;
+                    if (plan.Spec.Behavior.ContinueWaitingOnStartupTimeout)
+                    {
+                        if (!startupTimeoutReported)
+                        {
+                            startupTimeoutReported = true;
+                            var code = session.PluginStarted ? "OL_W_STARTUP_STILL_LOADING" : "OL_W_PLUGIN_STILL_LOADING";
+                            var message = session.PluginStarted
+                                ? "OMSI is still loading after the startup timeout; the interactive session will keep waiting while the process remains alive."
+                                : "OMSI is still running but the plugin has not completed startup; the interactive session will keep waiting and will not terminate the game.";
+                            session.AddDiagnostic(code, message);
+                            trace.Write("STARTUP_TIMEOUT_CONTINUE_WAITING", code);
+                        }
+                        deadline = DateTimeOffset.MaxValue;
+                    }
+                    else
+                    {
+                        session.Fail(session.PluginStarted ? "OL_E_STARTUP_TIMEOUT" : "OL_E_PLUGIN_NOT_LOADED", "The requested semantic startup state was not reached before the timeout.");
+                        break;
+                    }
                 }
                 await Task.Delay(100).ConfigureAwait(false);
             }

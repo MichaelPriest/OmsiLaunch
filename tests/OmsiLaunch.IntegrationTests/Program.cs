@@ -72,6 +72,7 @@ sealed class FakeNative : IPluginNativeServices
     public bool Armed { get; private set; } public string? Map { get; private set; } public int Index { get; private set; } public string? EntrypointIdentity { get; private set; }
     public bool ValidateBuild(string profileIdentity) => profileIdentity == "Omsi23004_692EBFBF";
     public bool ArmHeadlessStart() { Armed = true; return true; }
+    public bool RevealStartFormFromHeadless() => true;
     public int StartNewMap(string mapIdentity, int presentedEntrypointIndex, string entrypointIdentity) { Map = mapIdentity; Index = presentedEntrypointIndex; EntrypointIdentity = entrypointIdentity; return 0; }
     public string? Situation { get; private set; }
     public int StartSavedSituation(string situationIdentity) { Situation = situationIdentity; return 0; }

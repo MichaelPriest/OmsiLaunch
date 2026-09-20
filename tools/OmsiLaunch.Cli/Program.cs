@@ -48,7 +48,7 @@ if (string.IsNullOrWhiteSpace(input.Installation) && input.Command is "events" &
 }
 if (string.IsNullOrWhiteSpace(input.Installation) && input.Command is "events" && input.CommandWords.Count == 1 && input.CommandWords[0].Equals("watch", StringComparison.OrdinalIgnoreCase))
     return await CliEventWatch.RunAsync(input);
-if (input.Command is "detect" || (string.IsNullOrWhiteSpace(input.Installation) && input.Command is null && !input.Help && input.SpecFile is null && !input.LaunchRequested))
+if (input.Command is "detect" || (string.IsNullOrWhiteSpace(input.Installation) && string.IsNullOrWhiteSpace(input.Executable) && input.Command is null && !input.Help && input.SpecFile is null && !input.LaunchRequested))
 {
     var discovered = Process.GetProcessesByName("Omsi").Select(process =>
     {
@@ -59,7 +59,7 @@ if (input.Command is "detect" || (string.IsNullOrWhiteSpace(input.Installation) 
     CliInput.WriteEnvelope("detect", new { state = discovered.Length == 0 ? "NO_OMSI_FOUND" : "OMSI_FOUND_UNMANAGED", processes = discovered, active_omsilaunch_instance = active?.Ok == true, managed_session = active?.Result }, input.JsonOutput);
     return 0;
 }
-if (input.Help || (string.IsNullOrWhiteSpace(input.Installation) && input.SpecFile is null && !input.LaunchRequested))
+if (input.Help || (string.IsNullOrWhiteSpace(input.Installation) && string.IsNullOrWhiteSpace(input.Executable) && input.SpecFile is null && !input.LaunchRequested))
 {
     Console.WriteLine(CliInput.Usage);
     return input.Help ? 0 : 2;
@@ -71,10 +71,11 @@ var pluginRuntime = File.Exists(Path.Combine(packagedRuntime, "OmsiLaunch.Plugin
 var nativeRuntime = Path.Combine(pluginRuntime, "OmsiLaunch.Native.x86.dll");
 if (!File.Exists(nativeRuntime)) nativeRuntime = Path.Combine(Directory.GetCurrentDirectory(), "artifacts", "x86", "Debug", "OmsiLaunch.Native.x86.dll");
 IOmsiLaunch launch = new OmsiLaunchService(new CurrentWindowsX64Platform(), new OmsiLaunchRuntimePaths(pluginRuntime, nativeRuntime));
+var spec = await input.BuildSpecAsync();
 
 if (input.Recovery)
 {
-    var transaction = new OmsiLaunch.Configuration.FileConfigurationTransaction(input.Installation!, new Dictionary<string, byte[]>());
+    var transaction = new OmsiLaunch.Configuration.FileConfigurationTransaction(spec.Installation.RootPath, new Dictionary<string, byte[]>());
     var pending = await transaction.HasPendingRecoveryAsync();
     if (input.Recover && pending) await transaction.RestorePendingAsync();
     CliInput.WriteEnvelope("recover", new { pending, recovered = input.Recover && pending }, input.JsonOutput);
@@ -85,12 +86,11 @@ if (input.List is not null)
 {
     if (!Enum.TryParse<ContentQueryKind>(input.List, true, out var kind)) throw new ArgumentException("Unknown discovery category: " + input.List);
     var scope = kind == ContentQueryKind.Entrypoints ? input.Map : input.VehicleScope;
-    var result = await launch.DiscoverAsync(new InstallationSpec(input.Installation!), kind, scope is null ? OptionalValue<string>.Unset : OptionalValue<string>.Set(scope));
+    var result = await launch.DiscoverAsync(spec.Installation, kind, scope is null ? OptionalValue<string>.Unset : OptionalValue<string>.Set(scope));
     CliInput.WriteEnvelope("content.list", result, input.JsonOutput);
     return 0;
 }
 
-var spec = await input.BuildSpecAsync();
 var plan = await launch.PlanSessionAsync(spec);
 CliInput.Write(plan, input.JsonOutput);
 if (input.PlanOnly || input.ValidateOnly) return plan.IsRunnable ? 0 : 1;
@@ -152,9 +152,32 @@ if (input.RuntimeOperation is not null)
         return 1;
     }
 }
-if (input.Serve) await controlStopped.Task;
-else await Task.Delay(TimeSpan.FromSeconds(input.ObserveSeconds));
-await launch.StopAsync(session);
+var shouldRequestStop = false;
+if (input.Serve)
+{
+    await controlStopped.Task;
+    shouldRequestStop = true;
+}
+else if (input.ObserveSecondsSpecified || input.RuntimeOperation is not null || input.RuntimeBatch || input.RuntimeWriteBatch || input.D3DBatch)
+{
+    // Explicit observation and validation/one-shot runtime modes retain the
+    // bounded lifecycle used by the test and automation surface.
+    await Task.Delay(TimeSpan.FromSeconds(input.ObserveSeconds));
+    shouldRequestStop = true;
+}
+else
+{
+    // Normal launcher mode: keep the managed session alive until the user
+    // closes OMSI. The previous default stopped every successful session after
+    // eight seconds, which made the game appear to launch and immediately exit.
+    while (true)
+    {
+        var status = await launch.GetStatusAsync(session);
+        if (status.State is SessionState.Completed or SessionState.Failed) break;
+        await Task.Delay(250);
+    }
+}
+if (shouldRequestStop) await launch.StopAsync(session);
 var completed = await launch.WaitForAsync(session, SessionState.Completed, TimeSpan.FromSeconds(spec.Behavior.ShutdownTimeoutSeconds));
 CliInput.Write(completed, input.JsonOutput);
 await launch.CloseAsync(session);
@@ -162,15 +185,15 @@ return completed.State == SessionState.Completed ? 0 : 1;
 
 internal sealed class CliInput
 {
-    internal const string Usage = "OmsiLaunch.exe [detect|capabilities|profiles] [<installation>] [/new|/saved:<file.osn>|/last] [/map:<identity>] [/entrypoint:<identity>|/entrypoint-index:<n>] [/splash:Managed|Native|Unset /splash-language:PTB|ENG|FRA|DEU /splash-assets:<directory>] [/internet-textures:Native|Disabled|Override /internet-textures-profile:<file.itx>] [/spec:<path-to-json>] [/plan|/validate|/runtime:<operation> /runtime-arg:<key=value>] [/recover] [--json].\n\nCommands: detect (default), capabilities, profiles, recover. Managed splash is the default; Native and Unset preserve OMSI files. Runtime operations remain session-scoped and use /runtime:<operation>; consult `capabilities --json` for the canonical Beta catalog.";
+    internal const string Usage = "OmsiLaunch.exe [detect|capabilities|profiles] [<installation>] [/exe:<path-to-Omsi.exe>] [/new|/saved:<file.osn>|/last] [/map:<identity>] [/entrypoint:<identity>|/entrypoint-index:<n>] [/splash:Managed|Native|Unset /splash-language:PTB|ENG|FRA|DEU /splash-assets:<directory>] [/internet-textures:Native|Disabled|Override /internet-textures-profile:<file.itx>] [/spec:<path-to-json>] [/plan|/validate|/runtime:<operation> /runtime-arg:<key=value>] [/recover] [--json].\n\nCommands: detect (default), capabilities, profiles, recover. Managed splash is the default; Native and Unset preserve OMSI files. Runtime operations remain session-scoped and use /runtime:<operation>; consult `capabilities --json` for the canonical Beta catalog.";
     internal static readonly JsonSerializerOptions Json = new() { WriteIndented = true };
-    public string? Installation { get; private set; } public string? Command { get; private set; } public List<string> CommandWords { get; } = new(); public bool Help { get; private set; } public bool Version { get; private set; } public bool JsonOutput { get; private set; } public bool Quiet { get; private set; } public bool Verbose { get; private set; } public bool Log { get; private set; } public bool LogAll { get; private set; } public bool OmsiLogAll { get; private set; } public bool TraceProcess { get; private set; } public bool TracePlugin { get; private set; } public bool TraceNative { get; private set; } public bool PlanOnly { get; private set; } public bool ValidateOnly { get; private set; } public bool Serve { get; private set; } public bool LaunchRequested { get; private set; }
+    public string? Installation { get; private set; } public string? Executable { get; private set; } public string? Command { get; private set; } public List<string> CommandWords { get; } = new(); public bool Help { get; private set; } public bool Version { get; private set; } public bool JsonOutput { get; private set; } public bool Quiet { get; private set; } public bool Verbose { get; private set; } public bool Log { get; private set; } public bool LogAll { get; private set; } public bool OmsiLogAll { get; private set; } public bool TraceProcess { get; private set; } public bool TracePlugin { get; private set; } public bool TraceNative { get; private set; } public bool PlanOnly { get; private set; } public bool ValidateOnly { get; private set; } public bool Serve { get; private set; } public bool LaunchRequested { get; private set; }
     public SplashMode Splash { get; private set; } = SplashMode.Managed; public bool SplashSpecified { get; private set; } public string? SplashLanguage { get; private set; } public string? SplashAssets { get; private set; } public InternetTexturesMode InternetTextures { get; private set; } = InternetTexturesMode.Native; public string? InternetTexturesProfile { get; private set; }
     public bool Recovery { get; private set; } public bool Recover { get; private set; } public bool RuntimeBatch { get; private set; } public bool RuntimeWriteBatch { get; private set; } public bool D3DBatch { get; private set; } public string? RuntimeOperation { get; private set; } public Dictionary<string, string> RuntimeArguments { get; } = new(StringComparer.Ordinal); public string? List { get; private set; } public string? VehicleScope { get; private set; } public string? SpecFile { get; private set; }
     public WorldMode WorldMode { get; private set; } = WorldMode.NewMap; public string? Map { get; private set; } public string? Situation { get; private set; } public int? EntrypointIndex { get; private set; } public string? EntrypointIdentity { get; private set; }
     public string? Date { get; private set; } public string? Time { get; private set; } public string? Year { get; private set; } public WeatherMode WeatherMode { get; private set; } public string? Weather { get; private set; } public string? Icao { get; private set; }
     public bool NoVehicle { get; private set; } public string? Vehicle { get; private set; } public string? Repaint { get; private set; } public string? Hof { get; private set; } public string? Fleet { get; private set; } public string? Registration { get; private set; }
-    public int StartupTimeout { get; private set; } = 180; public int ShutdownTimeout { get; private set; } = 30; public int ObserveSeconds { get; private set; } = 8; public Dictionary<string, string> Settings { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public int StartupTimeout { get; private set; } = 180; public int ShutdownTimeout { get; private set; } = 30; public int ObserveSeconds { get; private set; } = 8; public bool ObserveSecondsSpecified { get; private set; } public Dictionary<string, string> Settings { get; } = new(StringComparer.OrdinalIgnoreCase);
 
     public static CliInput Parse(string[] args)
     {
@@ -196,6 +219,7 @@ internal sealed class CliInput
             {
                 case "?": case "help": output.Help = true; break; case "version": output.Version = true; break; case "json": output.JsonOutput = true; break; case "quiet": output.Quiet = true; break; case "verbose": output.Verbose = true; break; case "serve": output.Serve = true; break; case "log": output.Log = true; break; case "logall": output.LogAll = true; break; case "omsi-logall": output.OmsiLogAll = true; break; case "trace": case "trace-process": output.TraceProcess = true; break; case "trace-plugin": output.TracePlugin = true; break; case "trace-native": output.TraceNative = true; break; case "plan": output.PlanOnly = true; break; case "validate": output.ValidateOnly = true; break; case "runtime-batch": output.RuntimeBatch = true; break;
                 case "runtime-write-batch": output.RuntimeWriteBatch = true; break;
+                case "exe": output.Executable = value ?? throw new ArgumentException("/exe requires the full path to Omsi.exe"); break;
                 case "splash": output.Splash = Enum.Parse<SplashMode>(value ?? throw new ArgumentException("/splash requires Unset, Native, or Managed"), true); output.SplashSpecified = true; break;
                 case "splash-language": output.SplashLanguage = value ?? throw new ArgumentException("/splash-language requires a locale"); break;
                 case "splash-assets": output.SplashAssets = value ?? throw new ArgumentException("/splash-assets requires a directory"); break;
@@ -211,7 +235,7 @@ internal sealed class CliInput
                 case "vehicle": output.Vehicle = value; break; case "repaint": output.Repaint = value; break; case "hof": output.Hof = value; break; case "fleet": output.Fleet = value; break; case "registration": output.Registration = value; break; case "no-vehicle": output.NoVehicle = true; break;
                 case "set": var setting = value!.Split('=', 2); if (setting.Length != 2) throw new ArgumentException("/set requires key=value"); output.Settings[setting[0]] = setting[1]; break;
                 case "spec": output.SpecFile = value; break; case "list": output.List = value; break; case "vehicle-scope": output.VehicleScope = value; break;
-                case "startup-timeout": output.StartupTimeout = int.Parse(value!); break; case "shutdown-timeout": output.ShutdownTimeout = int.Parse(value!); break; case "observe-seconds": output.ObserveSeconds = int.Parse(value!); break;
+                case "startup-timeout": output.StartupTimeout = int.Parse(value!); break; case "shutdown-timeout": output.ShutdownTimeout = int.Parse(value!); break; case "observe-seconds": output.ObserveSeconds = int.Parse(value!); output.ObserveSecondsSpecified = true; break;
                 case "recovery-status": output.Recovery = true; break; case "recover": output.Recovery = true; output.Recover = true; break; default: throw new ArgumentException("Unknown argument: " + raw);
             }
         }
@@ -251,6 +275,28 @@ internal sealed class CliInput
         // containing OmsiLaunch.exe, not the caller's arbitrary working folder.
         if (installationRoot == ".") installationRoot = AppContext.BaseDirectory;
         installationRoot = Path.GetFullPath(installationRoot);
+
+        // Standalone/manual installations do not need Steam discovery. When an
+        // explicit executable is supplied, derive the OMSI root from that file
+        // and keep the existing exact-build validation in SessionPlanner.
+        var explicitExecutable = Executable;
+        if (!string.IsNullOrWhiteSpace(explicitExecutable))
+        {
+            var executablePath = Path.GetFullPath(Environment.ExpandEnvironmentVariables(explicitExecutable));
+            if (!File.Exists(executablePath)) throw new FileNotFoundException("OL_E_OMSI_EXECUTABLE_NOT_FOUND: " + executablePath, executablePath);
+            if (!Path.GetFileName(executablePath).Equals("Omsi.exe", StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException("/exe must point to Omsi.exe.");
+
+            var executableRoot = Path.GetDirectoryName(executablePath)
+                ?? throw new ArgumentException("/exe does not contain a valid installation directory.");
+
+            if (!string.IsNullOrWhiteSpace(Installation) &&
+                !Path.GetFullPath(installationRoot).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                    .Equals(Path.GetFullPath(executableRoot).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar), StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException("The positional installation root and /exe point to different OMSI installations.");
+
+            installationRoot = Path.GetFullPath(executableRoot);
+        }
         var vehicle = NoVehicle ? OptionalValue<PlayerVehicleSpec>.Unset : VehicleSpec(seed.PlayerVehicle);
         var settings = new Dictionary<string, OptionalValue<string>>(seed.Environment.General, StringComparer.OrdinalIgnoreCase);
         foreach (var pair in Settings)
