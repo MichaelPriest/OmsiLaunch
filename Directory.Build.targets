@@ -1,6 +1,7 @@
 <Project>
   <PropertyGroup>
     <OmsiLaunchComponentDescription Condition="'$(MSBuildProjectName)' == 'OmsiLaunch.Cli'">OmsiLaunch Runtime Controller</OmsiLaunchComponentDescription>
+    <OmsiLaunchComponentDescription Condition="'$(MSBuildProjectName)' == 'OmsiLaunch.Gui'">OmsiLaunch Graphical Launcher</OmsiLaunchComponentDescription>
     <OmsiLaunchComponentDescription Condition="'$(MSBuildProjectName)' == 'OmsiLaunch.Api'">OmsiLaunch API</OmsiLaunchComponentDescription>
     <OmsiLaunchComponentDescription Condition="'$(MSBuildProjectName)' == 'OmsiLaunch.Builds.Omsi23004'">OmsiLaunch OMSI 2.3.004 Build Profile</OmsiLaunchComponentDescription>
     <OmsiLaunchComponentDescription Condition="'$(MSBuildProjectName)' == 'OmsiLaunch.Configuration'">OmsiLaunch Configuration</OmsiLaunchComponentDescription>
