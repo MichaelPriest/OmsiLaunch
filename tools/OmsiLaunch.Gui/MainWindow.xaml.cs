@@ -18,6 +18,11 @@ public partial class MainWindow : Window
     private bool allowWindowClose;
     private bool refreshingContent;
     private bool recoveryPending;
+    private Choice[] libraryMaps = Array.Empty<Choice>();
+    private Choice[] libraryVehicles = Array.Empty<Choice>();
+    private ulong runtimeRequestId;
+    private DateTimeOffset nextLiveRefreshUtc = DateTimeOffset.MinValue;
+    private bool liveRefreshInFlight;
 
     private sealed record Choice(string Display, string Identity);
     private sealed record LauncherSettings(string? OmsiExecutable);
@@ -198,29 +203,154 @@ public partial class MainWindow : Window
             var hofs = await launch.DiscoverAsync(installation, ContentQueryKind.Hofs);
             var addons = await launch.DiscoverAsync(installation, ContentQueryKind.Addons);
 
-            var mapChoices = maps.Select(x => new Choice(x.DisplayName ?? x.Identity, x.Identity)).ToArray();
-            var vehicleChoices = vehicles.Select(x => new Choice(x.DisplayName ?? x.Identity, x.Identity)).ToArray();
+            libraryMaps = maps.Select(x => new Choice(x.DisplayName ?? x.Identity, x.Identity)).ToArray();
+            libraryVehicles = vehicles.Select(x => new Choice(x.DisplayName ?? x.Identity, x.Identity)).ToArray();
             var hofChoices = hofs.Select(x => new Choice(x.DisplayName ?? Path.GetFileName(x.Identity), x.Identity)).ToArray();
             var addonChoices = addons.Select(x => new Choice(x.DisplayName ?? x.Identity, x.Identity)).ToArray();
 
-            LibraryMapsListBox.ItemsSource = mapChoices;
-            VehiclesListBox.ItemsSource = vehicleChoices;
+            ApplyMapFilter();
+            ApplyVehicleFilter();
             HofsListBox.ItemsSource = hofChoices;
             AddonsListBox.ItemsSource = addonChoices;
 
-            MapsCountTextBlock.Text = $"{mapChoices.Length} mapa(s)";
-            VehiclesCountTextBlock.Text = $"{vehicleChoices.Length} veículo(s)";
             HofsCountTextBlock.Text = $"{hofChoices.Length} HOF(s)";
             AddonsCountTextBlock.Text = addonChoices.Length.ToString();
 
             InstallationSummaryTextBlock.Text =
-                $"{mapChoices.Length} mapas · {vehicleChoices.Length} veículos · {hofChoices.Length} HOFs · {addonChoices.Length} addons/diretórios detectados";
+                $"{libraryMaps.Length} mapas · {libraryVehicles.Length} veículos · {hofChoices.Length} HOFs · {addonChoices.Length} addons/diretórios detectados";
 
             RefreshPluginInventory(root);
+            HealthChecksListBox.ItemsSource = HubServices.ScanInstallation(root);
         }
         catch (Exception exception)
         {
             AppendLog("Falha ao atualizar biblioteca: " + exception.Message);
+        }
+    }
+
+    private void ApplyMapFilter()
+    {
+        if (!IsLoaded) return;
+        var query = MapSearchTextBox?.Text?.Trim() ?? string.Empty;
+        var filtered = string.IsNullOrWhiteSpace(query)
+            ? libraryMaps
+            : libraryMaps.Where(x => x.Display.Contains(query, StringComparison.OrdinalIgnoreCase)
+                || x.Identity.Contains(query, StringComparison.OrdinalIgnoreCase)).ToArray();
+        LibraryMapsListBox.ItemsSource = filtered;
+        MapsCountTextBlock.Text = $"{filtered.Length} de {libraryMaps.Length} mapa(s)";
+    }
+
+    private void ApplyVehicleFilter()
+    {
+        if (!IsLoaded) return;
+        var query = VehicleSearchTextBox?.Text?.Trim() ?? string.Empty;
+        var filtered = string.IsNullOrWhiteSpace(query)
+            ? libraryVehicles
+            : libraryVehicles.Where(x => x.Display.Contains(query, StringComparison.OrdinalIgnoreCase)
+                || x.Identity.Contains(query, StringComparison.OrdinalIgnoreCase)).ToArray();
+        VehiclesListBox.ItemsSource = filtered;
+        VehiclesCountTextBlock.Text = $"{filtered.Length} de {libraryVehicles.Length} veículo(s)";
+    }
+
+    private void MapSearch_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) => ApplyMapFilter();
+
+    private void VehicleSearch_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) => ApplyVehicleFilter();
+
+    private void RunHealthCheck_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var root = ResolveInstallationRoot();
+            var results = HubServices.ScanInstallation(root);
+            HealthChecksListBox.ItemsSource = results;
+            var errors = results.Count(x => x.Status == "ERRO");
+            var warnings = results.Count(x => x.Status == "AVISO");
+            AppendLog($"Verificação concluída: {errors} erro(s), {warnings} aviso(s).");
+            SetStatus(errors == 0 ? "Instalação verificada" : "Instalação requer atenção");
+        }
+        catch (Exception exception)
+        {
+            AppendLog("Falha na verificação: " + exception.Message);
+            SetStatus("Falha na verificação");
+        }
+    }
+
+    private void CreateSupportBundle_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var root = ResolveInstallationRoot();
+            var dialog = new SaveFileDialog
+            {
+                Title = "Salvar pacote de suporte do OmsiLaunch",
+                Filter = "Arquivo ZIP (*.zip)|*.zip",
+                FileName = $"OmsiLaunch-Support-{DateTime.Now:yyyyMMdd-HHmmss}.zip",
+                AddExtension = true,
+                DefaultExt = ".zip"
+            };
+            if (dialog.ShowDialog(this) != true) return;
+            HubServices.CreateSupportBundle(root, dialog.FileName);
+            AppendLog("Pacote de suporte criado: " + dialog.FileName);
+            SetStatus("Pacote de suporte criado");
+        }
+        catch (Exception exception)
+        {
+            AppendLog("Falha ao criar pacote de suporte: " + exception.Message);
+            SetStatus("Falha no pacote de suporte");
+        }
+    }
+
+    private async void RefreshLive_Click(object sender, RoutedEventArgs e)
+    {
+        var handle = activeSession;
+        if (handle is null) return;
+        await RefreshLivePanelAsync(handle, true);
+    }
+
+    private async Task RefreshLivePanelAsync(SessionHandle handle, bool reportUnavailable)
+    {
+        if (liveRefreshInFlight) return;
+        liveRefreshInFlight = true;
+        try
+        {
+            var status = await launch.GetStatusAsync(handle);
+            if (status.State != SessionState.Running)
+            {
+                if (reportUnavailable)
+                    AppendLog("Painel ao vivo ficará disponível quando a sessão entrar em OMSI em execução.");
+                return;
+            }
+
+            var lines = new List<string>();
+            foreach (var operation in new[] { "map.read", "time.read", "weather.read", "player-vehicle.read" })
+            {
+                try
+                {
+                    var command = new RuntimeCommand(handle.SessionId, ++runtimeRequestId, operation);
+                    var result = await launch.ExecuteRuntimeAsync(handle, command, TimeSpan.FromSeconds(3));
+                    if (!result.Succeeded)
+                    {
+                        lines.Add($"{operation}: {result.ErrorCode ?? "falhou"}");
+                        continue;
+                    }
+
+                    var values = result.Values is { Count: > 0 }
+                        ? string.Join(" · ", result.Values.Select(pair => pair.Key + "=" + pair.Value))
+                        : "sem dados";
+                    lines.Add($"{operation}: {values}");
+                }
+                catch (Exception exception)
+                {
+                    lines.Add($"{operation}: {exception.Message}");
+                }
+            }
+
+            LiveRuntimeListBox.ItemsSource = lines;
+            nextLiveRefreshUtc = DateTimeOffset.UtcNow.AddSeconds(3);
+        }
+        finally
+        {
+            liveRefreshInFlight = false;
         }
     }
 
@@ -502,6 +632,8 @@ public partial class MainWindow : Window
             SessionRuntimeTextBlock.Text = "Preparando";
             SessionEventsListBox.Items.Clear();
             SessionDiagnosticsListBox.Items.Clear();
+            LiveRuntimeListBox.ItemsSource = null;
+            nextLiveRefreshUtc = DateTimeOffset.MinValue;
             SetSessionUi(true);
             AppendLog($"Sessão {handle.SessionId:D} iniciada.");
             _ = MonitorSessionAsync(handle, monitorCancellation.Token);
@@ -540,6 +672,7 @@ public partial class MainWindow : Window
                         : "Aguardando";
                     SessionRuntimeTextBlock.Text = status.State == SessionState.Running ? "Ativo" :
                         status.State is SessionState.Completed or SessionState.Failed ? "Encerrado" : "Preparando";
+                    RefreshLiveButton.IsEnabled = status.State == SessionState.Running;
                     AppendLog("Estado: " + DescribeState(status.State));
                 }
 
@@ -577,6 +710,11 @@ public partial class MainWindow : Window
                     SetStatus(status.State == SessionState.Completed ? "Sessão encerrada" : "Sessão falhou");
                     return;
                 }
+
+                if (status.State == SessionState.Running
+                    && AutoLiveCheckBox.IsChecked == true
+                    && DateTimeOffset.UtcNow >= nextLiveRefreshUtc)
+                    await RefreshLivePanelAsync(handle, false);
 
                 await Task.Delay(400, cancellationToken);
             }
@@ -791,6 +929,7 @@ public partial class MainWindow : Window
         InstallPluginButton.IsEnabled = !running;
         RecoveryButton.IsEnabled = !running && recoveryPending;
         StopButton.IsEnabled = running;
+        if (!running) RefreshLiveButton.IsEnabled = false;
     }
 
     private void UpdateActionButtons()
