@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Diagnostics;
 using OmsiLaunch.Api;
 using OmsiLaunch.Builds.Omsi23004;
 using OmsiLaunch.Content;
@@ -20,7 +22,27 @@ public sealed class SessionPlanner
         Require("runtime.current-windows-x64", detected.CurrentPlatformSupported, "Current Windows x64 platform validation", required, diagnostics, "OL_E_UNSUPPORTED_OPERATING_SYSTEM");
         Require("transaction.exact-restore", detected.ExactRestoreSupported && detected.InstallationWritable, "installation transaction and exact restore", required, diagnostics, "OL_E_INSTALLATION_NOT_WRITABLE");
         var executable = new FileInfo(Path.Combine(spec.Installation.RootPath, "Omsi.exe"));
-        Require("omsi.profile.OMS I23004".Replace(" ", string.Empty), executable.Exists && Omsi23004.Profile.MatchesExecutable(executable), "exact OMSI executable profile", required, diagnostics, "OL_E_UNSUPPORTED_BUILD");
+        var executableMatchesProfile = executable.Exists && Omsi23004.Profile.MatchesExecutable(executable);
+        Require("omsi.profile.OMS I23004".Replace(" ", string.Empty), executableMatchesProfile, "exact OMSI executable profile", required, diagnostics, "OL_E_UNSUPPORTED_BUILD");
+        if (executable.Exists && !executableMatchesProfile)
+        {
+            string sha256;
+            using (var stream = executable.OpenRead())
+            using (var algorithm = SHA256.Create())
+                sha256 = Convert.ToHexString(algorithm.ComputeHash(stream));
+
+            var version = FileVersionInfo.GetVersionInfo(executable.FullName);
+            diagnostics.Add(new LaunchDiagnostic(
+                "OL_E_UNSUPPORTED_BUILD_FINGERPRINT",
+                "The selected Omsi.exe does not match a supported exact-build fingerprint.",
+                new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["sha256"] = sha256,
+                    ["size"] = executable.Length.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    ["file_version"] = version.FileVersion ?? string.Empty,
+                    ["product_version"] = version.ProductVersion ?? string.Empty
+                }));
+        }
         var catalog = new FileSystemContentCatalog(spec.Installation.RootPath);
         if (spec.World.Mode == WorldMode.NewMap && spec.World.MapIdentity.IsSet)
         {
