@@ -429,6 +429,27 @@ extern "C" __declspec(dllexport) int __cdecl NativeArmHeadlessStart() {
     return 1;
 }
 
+// Safety fallback for interactive hosts: if the upstream headless path cannot
+// assign the requested map while the modal Start form is already running,
+// restore every hook and make that same live form visible again. This keeps the
+// user out of a permanent black-screen modal loop without fabricating world state.
+extern "C" __declspec(dllexport) int __cdecl NativeRevealStartFormFromHeadless() {
+    void* form = nullptr;
+    if (!ReadStartForm(&form)) {
+        RestoreHeadlessStartHooks();
+        return 0;
+    }
+
+    RestoreHeadlessStartHooks();
+    __asm {
+        mov eax, form
+        mov dl, 1
+        mov ecx, 0054CCA8h
+        call ecx
+    }
+    return 1;
+}
+
 void __declspec(naked) HeadlessStartShowModalStub() {
     __asm {
         pushad
