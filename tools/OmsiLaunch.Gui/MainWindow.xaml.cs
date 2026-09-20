@@ -568,6 +568,8 @@ public partial class MainWindow : Window
     private void SetSessionUi(bool running)
     {
         ExecutablePathTextBox.IsEnabled = !running;
+        BrowseExecutableButton.IsEnabled = !running;
+        RefreshContentButton.IsEnabled = !running;
         LaunchModeComboBox.IsEnabled = !running;
         ContentComboBox.IsEnabled = !running;
         EntrypointComboBox.IsEnabled = !running;
