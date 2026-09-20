@@ -14,3 +14,5 @@ before relying on experimental capabilities.
 
 Localized copies are available under `docs/localized/`. English is normative
 when technical wording differs.
+
+For application developers, see [host application integration](reference/HOST-INTEGRATION.md) for the supported boundary between external tools and the OmsiLaunch session engine.
