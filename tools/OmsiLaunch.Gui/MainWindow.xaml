@@ -119,9 +119,16 @@
                                 <ComboBox x:Name="EntrypointComboBox" Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2"
                                           DisplayMemberPath="Display"/>
 
-                                <StackPanel Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Horizontal">
-                                    <CheckBox x:Name="ManagedSplashCheckBox" Content="Splash do OmsiLaunch" IsChecked="True" Margin="0,0,22,0"/>
-                                    <CheckBox x:Name="DisableInternetTexturesCheckBox" Content="Desativar texturas da internet"/>
+                                <StackPanel Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2">
+                                    <StackPanel Orientation="Horizontal">
+                                        <CheckBox x:Name="ManagedSplashCheckBox" Content="Splash do OmsiLaunch" IsChecked="True" Margin="0,0,22,0"/>
+                                        <CheckBox x:Name="DisableInternetTexturesCheckBox" Content="Desativar texturas da internet"/>
+                                    </StackPanel>
+                                    <CheckBox x:Name="HeadlessStartCheckBox"
+                                              Content="Modo headless oficial (avançado)"
+                                              IsChecked="False"
+                                              Margin="0,8,0,0"
+                                              ToolTip="Desativa a tela inicial normal do OMSI e usa o hook headless original. Deixe desmarcado para inicialização visível e mais tolerante."/>
                                 </StackPanel>
                             </Grid>
                         </Border>
