@@ -763,7 +763,7 @@ public partial class MainWindow : Window
                         : runtimeEvent.Type + " · " + string.Join(", ", runtimeEvent.Data.Select(x => x.Key + "=" + x.Value));
                     SessionEventsListBox.Items.Add(eventText);
                     SessionEventsListBox.ScrollIntoView(SessionEventsListBox.Items[SessionEventsListBox.Items.Count - 1]);
-                    AppendLog("Evento: " + runtimeEvent.Type);
+                    AppendLog("Evento: " + eventText);
                 }
 
                 while (seenDiagnostics < status.Diagnostics.Count)
@@ -896,7 +896,8 @@ public partial class MainWindow : Window
                 SuppressStaleClosecheckWarning: true,
                 StartupTimeoutSeconds: 600,
                 ShutdownTimeoutSeconds: 45,
-                ContinueWaitingOnStartupTimeout: true),
+                ContinueWaitingOnStartupTimeout: true,
+                HeadlessStart: HeadlessStartCheckBox.IsChecked == true),
             Presentation: new SessionPresentationSpec(
                 ManagedSplashCheckBox.IsChecked == true ? SplashMode.Managed : SplashMode.Unset,
                 OptionalValue<string>.Unset,
@@ -1002,6 +1003,7 @@ public partial class MainWindow : Window
         EntrypointComboBox.IsEnabled = !running;
         ManagedSplashCheckBox.IsEnabled = !running;
         DisableInternetTexturesCheckBox.IsEnabled = !running;
+        HeadlessStartCheckBox.IsEnabled = !running;
         ValidateButton.IsEnabled = !running;
         LaunchButton.IsEnabled = !running;
         InstallPluginButton.IsEnabled = !running;
