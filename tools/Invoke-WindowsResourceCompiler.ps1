@@ -28,5 +28,5 @@ New-Item -ItemType Directory -Path (Split-Path -Parent $OutputPath) -Force | Out
 
 & $compiler /nologo /I $IncludeDirectory /fo $OutputPath $Source
 if ($LASTEXITCODE -ne 0) {
-    throw "Resource compiler failed with exit code $LASTEXITCODE: $compiler"
+    throw "Resource compiler failed with exit code ${LASTEXITCODE}: $compiler"
 }
