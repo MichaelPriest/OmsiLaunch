@@ -358,6 +358,28 @@ public partial class MainWindow : Window
             }
 
             artifacts.ValidateInstalled(root);
+
+            var sourcePrivateRuntime = Path.Combine(AppContext.BaseDirectory, ".omsilaunch", "runtime", "win-x86");
+            var destinationPrivateRuntime = Path.Combine(root, ".omsilaunch", "runtime", "win-x86");
+            if (File.Exists(Path.Combine(sourcePrivateRuntime, "dotnet.exe")))
+            {
+                Directory.CreateDirectory(destinationPrivateRuntime);
+                foreach (var directory in Directory.EnumerateDirectories(sourcePrivateRuntime, "*", SearchOption.AllDirectories))
+                    Directory.CreateDirectory(Path.Combine(destinationPrivateRuntime, Path.GetRelativePath(sourcePrivateRuntime, directory)));
+                foreach (var sourceFile in Directory.EnumerateFiles(sourcePrivateRuntime, "*", SearchOption.AllDirectories))
+                {
+                    var relative = Path.GetRelativePath(sourcePrivateRuntime, sourceFile);
+                    var destinationFile = Path.Combine(destinationPrivateRuntime, relative);
+                    Directory.CreateDirectory(Path.GetDirectoryName(destinationFile)!);
+                    File.Copy(sourceFile, destinationFile, true);
+                }
+                AppendLog("Runtime .NET 6 x86 privado instalado/atualizado para o plugin.");
+            }
+            else
+            {
+                AppendLog("Aviso: este pacote não contém o runtime .NET 6 x86 privado.");
+            }
+
             AppendLog($"Plugin validado. {copied} arquivo(s) atualizado(s), {skipped} já estava(m) no destino.");
             if (Directory.Exists(backupRoot))
                 AppendLog("Backup da versão anterior: " + backupRoot);
@@ -543,6 +565,8 @@ public partial class MainWindow : Window
 
                 if (status.State is SessionState.Completed or SessionState.Failed)
                 {
+                    if (status.State == SessionState.Failed)
+                        AppendFailureEvidence(handle);
                     await launch.CloseAsync(handle, cancellationToken);
                     if (activeSession?.SessionId == handle.SessionId) activeSession = null;
                     monitorCancellation?.Dispose();
@@ -680,6 +704,45 @@ public partial class MainWindow : Window
 
         return Path.GetDirectoryName(executable)
             ?? throw new InvalidOperationException("Não foi possível determinar a pasta do OMSI.");
+    }
+
+    private void AppendFailureEvidence(SessionHandle handle)
+    {
+        try
+        {
+            var root = ResolveInstallationRoot();
+            var omsiLog = Path.Combine(root, "logfile.txt");
+            if (File.Exists(omsiLog))
+            {
+                var lines = File.ReadLines(omsiLog)
+                    .Where(line => line.Contains("plugin", StringComparison.OrdinalIgnoreCase)
+                        || line.Contains("error", StringComparison.OrdinalIgnoreCase)
+                        || line.Contains("OmsiLaunch", StringComparison.OrdinalIgnoreCase)
+                        || line.Contains("exception", StringComparison.OrdinalIgnoreCase))
+                    .TakeLast(40)
+                    .ToArray();
+                if (lines.Length > 0)
+                {
+                    AppendLog("--- Evidências do logfile.txt ---");
+                    foreach (var line in lines) AppendLog(line);
+                }
+            }
+
+            var hostLog = Path.Combine(root, ".omsilaunch", "diagnostics", handle.SessionId.ToString("N") + "-host.log");
+            if (File.Exists(hostLog))
+            {
+                var tail = File.ReadLines(hostLog).TakeLast(30).ToArray();
+                if (tail.Length > 0)
+                {
+                    AppendLog("--- Diagnóstico interno OmsiLaunch ---");
+                    foreach (var line in tail) AppendLog(line);
+                }
+            }
+        }
+        catch (Exception exception)
+        {
+            AppendLog("Não foi possível coletar evidências adicionais: " + exception.Message);
+        }
     }
 
     private static LauncherSettings? LoadSettings()
