@@ -1,6 +1,9 @@
 name: GUI Alpha
 
 on:
+  push:
+    branches:
+      - feature/standalone-installation-support
   workflow_dispatch:
 
 permissions:
