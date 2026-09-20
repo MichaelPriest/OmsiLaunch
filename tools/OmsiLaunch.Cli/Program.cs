@@ -86,12 +86,11 @@ if (input.List is not null)
 {
     if (!Enum.TryParse<ContentQueryKind>(input.List, true, out var kind)) throw new ArgumentException("Unknown discovery category: " + input.List);
     var scope = kind == ContentQueryKind.Entrypoints ? input.Map : input.VehicleScope;
-    var result = await launch.DiscoverAsync(new InstallationSpec(input.Installation!), kind, scope is null ? OptionalValue<string>.Unset : OptionalValue<string>.Set(scope));
+    var result = await launch.DiscoverAsync(spec.Installation, kind, scope is null ? OptionalValue<string>.Unset : OptionalValue<string>.Set(scope));
     CliInput.WriteEnvelope("content.list", result, input.JsonOutput);
     return 0;
 }
 
-var spec = await input.BuildSpecAsync();
 var plan = await launch.PlanSessionAsync(spec);
 CliInput.Write(plan, input.JsonOutput);
 if (input.PlanOnly || input.ValidateOnly) return plan.IsRunnable ? 0 : 1;
