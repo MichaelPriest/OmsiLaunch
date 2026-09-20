@@ -79,6 +79,8 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="18"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
@@ -86,8 +88,10 @@
             <Button x:Name="ValidateButton" Grid.Column="0" Content="Validar" Click="Validate_Click"/>
             <Button x:Name="LaunchButton" Grid.Column="1" Content="Iniciar OMSI" Click="Launch_Click"/>
             <Button x:Name="StopButton" Grid.Column="2" Content="Parar sessão" Click="Stop_Click" IsEnabled="False"/>
+            <Button x:Name="InstallPluginButton" Grid.Column="3" Content="Instalar plugin" Click="InstallPlugin_Click"/>
+            <Button x:Name="RecoveryButton" Grid.Column="4" Content="Recuperar arquivos" Click="Recovery_Click" IsEnabled="False"/>
 
-            <Border Grid.Column="4" Padding="12,8" CornerRadius="6" BorderThickness="1" BorderBrush="#33000000">
+            <Border Grid.Column="6" Padding="12,8" CornerRadius="6" BorderThickness="1" BorderBrush="#33000000">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock FontWeight="SemiBold" Text="Status: " />
                     <TextBlock x:Name="StatusTextBlock" Text="Pronto"/>
