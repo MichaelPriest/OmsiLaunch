@@ -110,7 +110,7 @@ public sealed class FileSystemContentCatalog : IOmsiContentCatalog
             var fingerprint = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonicalRecord)));
             entries.Add(new EntrypointContent(map.Identity, map.Identity + "#entrypoint:" + fingerprint, fields[11], fingerprint, map.IsReadable));
         }
-        return entries.OrderBy(entry => entry.Identity, StringComparer.Ordinal).ToArray();
+        // Preserve the serialized/presented order. The native Start form uses a\n        // zero-based list index, so callers (including the GUI) must see entrypoints\n        // in the same order OMSI presents them instead of hash-sorted order.\n        return entries.ToArray();
     }
 
     public MapContent ResolveMap(string identity) => EnumerateMaps().SingleOrDefault(x => SameIdentity(x.Identity, identity))
