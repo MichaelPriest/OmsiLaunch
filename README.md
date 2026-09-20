@@ -29,6 +29,21 @@ OmsiLaunch supports semantic session planning with `LaunchSpec` and
 normal `StopSession`/`CloseSession` cleanup. Supported runtime capabilities are
 explicitly cataloged; experimental and unavailable capabilities are not hidden.
 
+## Steam and standalone installations
+
+OmsiLaunch does not require Steam as a process launcher. The controller starts
+`Omsi.exe` directly and can therefore work with a manually installed or
+standalone OMSI 2 copy when its executable matches a supported exact-build
+profile.
+
+Use `/exe:<path-to-Omsi.exe>` to point at a standalone installation from any
+working directory. OmsiLaunch derives the installation root from the executable
+and keeps the same SHA-256 BuildProfile validation used for Steam installations.
+Unknown executables remain blocked because the in-process runtime depends on
+exact native layouts; this option does not bypass DRM, licensing, or build
+validation.
+
+
 ## Safe Session Ownership
 
 All launch configuration overrides are session-scoped. OmsiLaunch snapshots,
