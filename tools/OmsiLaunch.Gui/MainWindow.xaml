@@ -153,13 +153,17 @@
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="280"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock Text="Mapas instalados" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock Text="Biblioteca de mapas" Style="{StaticResource SectionTitle}"/>
                             <TextBlock x:Name="MapsCountTextBlock" Text="0 mapas" Opacity="0.7"/>
                         </StackPanel>
-                        <TextBlock Grid.Column="1" Text="Duplo clique para usar no lançamento" VerticalAlignment="Bottom" Opacity="0.65"/>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Buscar" Margin="0,0,0,4"/>
+                            <TextBox x:Name="MapSearchTextBox" TextChanged="MapSearch_TextChanged"
+                                     ToolTip="Filtre por nome ou caminho do mapa"/>
+                        </StackPanel>
                     </Grid>
                     <ListBox x:Name="LibraryMapsListBox" Grid.Row="2" DisplayMemberPath="Display"
                              MouseDoubleClick="LibraryMap_DoubleClick"/>
@@ -179,10 +183,21 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <StackPanel Grid.Column="0">
-                        <TextBlock Text="Veículos instalados" Style="{StaticResource SectionTitle}"/>
-                        <TextBlock x:Name="VehiclesCountTextBlock" Text="0 veículos" Opacity="0.7"/>
-                    </StackPanel>
+                    <Grid Grid.Column="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="240"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Veículos instalados" Style="{StaticResource SectionTitle}"/>
+                            <TextBlock x:Name="VehiclesCountTextBlock" Text="0 veículos" Opacity="0.7"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Buscar" Margin="0,0,0,4"/>
+                            <TextBox x:Name="VehicleSearchTextBox" TextChanged="VehicleSearch_TextChanged"
+                                     ToolTip="Filtre por nome ou arquivo .bus"/>
+                        </StackPanel>
+                    </Grid>
                     <ListBox x:Name="VehiclesListBox" Grid.Row="2" Grid.Column="0" DisplayMemberPath="Display"/>
 
                     <StackPanel Grid.Column="2">
@@ -230,11 +245,33 @@
                             <ColumnDefinition Width="12"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <GroupBox Header="Eventos da sessão">
-                            <ListBox x:Name="SessionEventsListBox"/>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <GroupBox Header="Painel ao vivo">
+                            <Grid Margin="8">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="8"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <StackPanel Orientation="Horizontal">
+                                    <Button x:Name="RefreshLiveButton" Content="Atualizar agora" Click="RefreshLive_Click" IsEnabled="False"/>
+                                    <CheckBox x:Name="AutoLiveCheckBox" Content="Atualização automática" IsChecked="True"
+                                              VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                </StackPanel>
+                                <ListBox x:Name="LiveRuntimeListBox" Grid.Row="2"/>
+                            </Grid>
                         </GroupBox>
+
                         <GroupBox Grid.Column="2" Header="Diagnósticos da sessão">
                             <ListBox x:Name="SessionDiagnosticsListBox"/>
+                        </GroupBox>
+
+                        <GroupBox Grid.Row="2" Grid.ColumnSpan="3" Header="Eventos da sessão">
+                            <ListBox x:Name="SessionEventsListBox"/>
                         </GroupBox>
                     </Grid>
                 </Grid>
@@ -297,13 +334,20 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="10"/>
+                        <RowDefinition Height="180"/>
+                        <RowDefinition Height="10"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Diagnóstico e eventos" Style="{StaticResource SectionTitle}" Margin="0,0,20,0"/>
-                        <Button Content="Limpar" Click="ClearLog_Click"/>
+                        <TextBlock Text="Diagnóstico e reparo" Style="{StaticResource SectionTitle}" Margin="0,0,20,0"/>
+                        <Button Content="Verificar instalação" Click="RunHealthCheck_Click"/>
+                        <Button Content="Criar pacote de suporte" Click="CreateSupportBundle_Click"/>
+                        <Button Content="Limpar log" Click="ClearLog_Click"/>
                     </StackPanel>
-                    <TextBox x:Name="LogTextBox" Grid.Row="2" IsReadOnly="True"
+                    <GroupBox Grid.Row="2" Header="Saúde da instalação">
+                        <ListBox x:Name="HealthChecksListBox" DisplayMemberPath="Display"/>
+                    </GroupBox>
+                    <TextBox x:Name="LogTextBox" Grid.Row="4" IsReadOnly="True"
                              AcceptsReturn="True" TextWrapping="Wrap"
                              VerticalScrollBarVisibility="Auto"
                              HorizontalScrollBarVisibility="Auto"/>
