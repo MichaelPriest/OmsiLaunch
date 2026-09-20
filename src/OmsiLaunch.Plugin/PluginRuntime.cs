@@ -41,11 +41,18 @@ public sealed class PluginRuntime
         var name = Environment.GetEnvironmentVariable("OMSILAUNCH_HANDOFF_NAME");
         if (string.IsNullOrWhiteSpace(name) || !TryReadHandoff(name, out var handoff)) { Emit("plugin.handoff.invalid"); return false; }
         Emit("plugin.started", ("session_id", handoff.SessionId.ToString("D")));
-        if ((handoff.WorldMode is not WorldMode.NewMap and not WorldMode.SavedSituation) || !handoff.HeadlessStart || handoff.PlayerVehicleEnabled || handoff.DateMode != DateTimeMode.Unset || handoff.TimeMode != DateTimeMode.Unset || (handoff.WorldMode == WorldMode.SavedSituation && string.IsNullOrWhiteSpace(handoff.SituationIdentity))) { Emit("plugin.request.unsupported"); return false; }
+        if ((handoff.WorldMode is not WorldMode.NewMap and not WorldMode.SavedSituation) || handoff.PlayerVehicleEnabled || handoff.DateMode != DateTimeMode.Unset || handoff.TimeMode != DateTimeMode.Unset || (handoff.WorldMode == WorldMode.SavedSituation && string.IsNullOrWhiteSpace(handoff.SituationIdentity))) { Emit("plugin.request.unsupported"); return false; }
         if (!native.ValidateBuild(handoff.BuildProfileId)) { Emit("plugin.build.invalid"); return false; }
         Emit("plugin.build.validated");
-        if (!native.ArmHeadlessStart()) { Emit("headless.arm.failed"); return false; }
-        Emit("headless.armed");
+        if (handoff.HeadlessStart)
+        {
+            if (!native.ArmHeadlessStart()) { Emit("headless.arm.failed"); return false; }
+            Emit("headless.armed");
+        }
+        else
+        {
+            Emit("visible-start.enabled");
+        }
         var runtimeChannel = Environment.GetEnvironmentVariable("OMSILAUNCH_RUNTIME_CHANNEL");
         if (!string.IsNullOrWhiteSpace(runtimeChannel) && runtimeControl is not null) mailbox = new CurrentRuntimeCommandMailbox(runtimeChannel, handoff.SessionId);
         native.InstallMainThreadGateway(); pending = handoff;
