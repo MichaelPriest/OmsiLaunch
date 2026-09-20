@@ -11,7 +11,7 @@
 
 **OmsiLaunch** is an open-source programmable launch, session-management,
 and runtime-control layer for OMSI 2. It provides a public API, a functional
-CLI, a native Windows graphical launcher, an in-process OMSI plugin/runtime,
+CLI, a Windows graphical launcher, an in-process OMSI plugin/runtime,
 and an exact-build `BuildProfile` boundary. The graphical launcher is intended
 for normal interactive use, while the CLI and API remain available for tools,
 automation, and community integrations.
@@ -98,6 +98,7 @@ Runtime control is session-scoped, profile-validated, and uses opaque semantic
 handles rather than public native pointers.
 
 - [Public API](docs/reference/PUBLIC-API.md)
+- [Host application integration](docs/reference/HOST-INTEGRATION.md)
 - [Runtime control](docs/reference/RUNTIME-CONTROL.md)
 - [Capability catalog](docs/reference/beta-0.1-capabilities.md)
 - [Known limitations](docs/reference/known-limitations.md)
