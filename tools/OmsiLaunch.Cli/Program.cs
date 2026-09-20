@@ -152,9 +152,30 @@ if (input.RuntimeOperation is not null)
         return 1;
     }
 }
-if (input.Serve) await controlStopped.Task;
-else await Task.Delay(TimeSpan.FromSeconds(input.ObserveSeconds));
-await launch.StopAsync(session);
+var shouldRequestStop = false;
+if (input.Serve)
+{
+    await controlStopped.Task;
+    shouldRequestStop = true;
+}
+else if (input.ObserveSecondsSpecified)
+{
+    await Task.Delay(TimeSpan.FromSeconds(input.ObserveSeconds));
+    shouldRequestStop = true;
+}
+else
+{
+    // Normal launcher mode: keep the managed session alive until the user
+    // closes OMSI. The previous default stopped every successful session after
+    // eight seconds, which made the game appear to launch and immediately exit.
+    while (true)
+    {
+        var status = await launch.GetStatusAsync(session);
+        if (status.State is SessionState.Completed or SessionState.Failed) break;
+        await Task.Delay(250);
+    }
+}
+if (shouldRequestStop) await launch.StopAsync(session);
 var completed = await launch.WaitForAsync(session, SessionState.Completed, TimeSpan.FromSeconds(spec.Behavior.ShutdownTimeoutSeconds));
 CliInput.Write(completed, input.JsonOutput);
 await launch.CloseAsync(session);
@@ -170,7 +191,7 @@ internal sealed class CliInput
     public WorldMode WorldMode { get; private set; } = WorldMode.NewMap; public string? Map { get; private set; } public string? Situation { get; private set; } public int? EntrypointIndex { get; private set; } public string? EntrypointIdentity { get; private set; }
     public string? Date { get; private set; } public string? Time { get; private set; } public string? Year { get; private set; } public WeatherMode WeatherMode { get; private set; } public string? Weather { get; private set; } public string? Icao { get; private set; }
     public bool NoVehicle { get; private set; } public string? Vehicle { get; private set; } public string? Repaint { get; private set; } public string? Hof { get; private set; } public string? Fleet { get; private set; } public string? Registration { get; private set; }
-    public int StartupTimeout { get; private set; } = 180; public int ShutdownTimeout { get; private set; } = 30; public int ObserveSeconds { get; private set; } = 8; public Dictionary<string, string> Settings { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public int StartupTimeout { get; private set; } = 180; public int ShutdownTimeout { get; private set; } = 30; public int ObserveSeconds { get; private set; } = 8; public bool ObserveSecondsSpecified { get; private set; } public Dictionary<string, string> Settings { get; } = new(StringComparer.OrdinalIgnoreCase);
 
     public static CliInput Parse(string[] args)
     {
@@ -212,7 +233,7 @@ internal sealed class CliInput
                 case "vehicle": output.Vehicle = value; break; case "repaint": output.Repaint = value; break; case "hof": output.Hof = value; break; case "fleet": output.Fleet = value; break; case "registration": output.Registration = value; break; case "no-vehicle": output.NoVehicle = true; break;
                 case "set": var setting = value!.Split('=', 2); if (setting.Length != 2) throw new ArgumentException("/set requires key=value"); output.Settings[setting[0]] = setting[1]; break;
                 case "spec": output.SpecFile = value; break; case "list": output.List = value; break; case "vehicle-scope": output.VehicleScope = value; break;
-                case "startup-timeout": output.StartupTimeout = int.Parse(value!); break; case "shutdown-timeout": output.ShutdownTimeout = int.Parse(value!); break; case "observe-seconds": output.ObserveSeconds = int.Parse(value!); break;
+                case "startup-timeout": output.StartupTimeout = int.Parse(value!); break; case "shutdown-timeout": output.ShutdownTimeout = int.Parse(value!); break; case "observe-seconds": output.ObserveSeconds = int.Parse(value!); output.ObserveSecondsSpecified = true; break;
                 case "recovery-status": output.Recovery = true; break; case "recover": output.Recovery = true; output.Recover = true; break; default: throw new ArgumentException("Unknown argument: " + raw);
             }
         }
