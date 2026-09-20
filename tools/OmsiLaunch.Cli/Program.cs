@@ -256,9 +256,10 @@ internal sealed class CliInput
         // Standalone/manual installations do not need Steam discovery. When an
         // explicit executable is supplied, derive the OMSI root from that file
         // and keep the existing exact-build validation in SessionPlanner.
-        if (!string.IsNullOrWhiteSpace(Executable))
+        var explicitExecutable = Executable;
+        if (!string.IsNullOrWhiteSpace(explicitExecutable))
         {
-            var executablePath = Path.GetFullPath(Environment.ExpandEnvironmentVariables(Executable));
+            var executablePath = Path.GetFullPath(Environment.ExpandEnvironmentVariables(explicitExecutable));
             if (!File.Exists(executablePath)) throw new FileNotFoundException("OL_E_OMSI_EXECUTABLE_NOT_FOUND: " + executablePath, executablePath);
             if (!Path.GetFileName(executablePath).Equals("Omsi.exe", StringComparison.OrdinalIgnoreCase))
                 throw new ArgumentException("/exe must point to Omsi.exe.");
