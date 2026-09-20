@@ -1,5 +1,24 @@
 # First Session
 
+## Graphical launcher
+
+For normal interactive use, open `OmsiLaunch.Launcher.exe`.
+
+The launcher detects `Omsi.exe` beside itself when the package is installed in
+the OMSI root. For a standalone/manual installation elsewhere, click
+**Browse...** once; the selected executable path is remembered in the current
+Windows user profile.
+
+Choose **New map** or **Saved situation**, select the content to load, and use
+**Validate** before **Start OMSI**. The diagnostic panel shows unsupported build
+profiles, missing plugin files, plugin startup failures, and session lifecycle
+events.
+
+Keep the launcher open while the managed session is running. Closing it with an
+active session prompts for a safe stop so OmsiLaunch can restore temporary files.
+
+## Command line
+
 From the OMSI root, inspect a portable Release example before starting OMSI:
 
 ```powershell
