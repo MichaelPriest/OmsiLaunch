@@ -515,7 +515,11 @@ public partial class MainWindow : Window
             new TimeSpec(DateTimeMode.Unset, OptionalValue<SemanticTime>.Unset),
             OptionalValue<PlayerVehicleSpec>.Unset,
             new EnvironmentSpec(empty, empty, empty, empty, empty, empty, empty, empty),
-            new LaunchBehaviorSpec(),
+            new LaunchBehaviorSpec(
+                RestoreConfiguration: true,
+                SuppressStaleClosecheckWarning: true,
+                StartupTimeoutSeconds: 600,
+                ShutdownTimeoutSeconds: 45),
             Presentation: new SessionPresentationSpec(
                 ManagedSplashCheckBox.IsChecked == true ? SplashMode.Managed : SplashMode.Unset,
                 OptionalValue<string>.Unset,
@@ -636,7 +640,7 @@ public partial class MainWindow : Window
         SessionState.DeployingRuntime => "Preparando runtime",
         SessionState.CreatingStartupHandoff => "Preparando inicialização",
         SessionState.StartingProcess => "Abrindo OMSI",
-        SessionState.WaitingForPlugin => "Aguardando plugin",
+        SessionState.WaitingForPlugin => "OMSI iniciado — carregando / aguardando plugin",
         SessionState.PluginBootstrap => "Plugin carregado",
         SessionState.StartingWorld => "Carregando mapa",
         SessionState.EnteringGameplay => "Entrando no jogo",
