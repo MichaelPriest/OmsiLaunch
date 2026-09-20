@@ -382,6 +382,7 @@ public partial class MainWindow : Window
     private async Task MonitorSessionAsync(SessionHandle handle, CancellationToken cancellationToken)
     {
         long lastEventSequence = 0;
+        var seenDiagnostics = 0;
         SessionState? lastState = null;
 
         try
@@ -404,11 +405,11 @@ public partial class MainWindow : Window
                     AppendLog("Evento: " + runtimeEvent.Type);
                 }
 
+                while (seenDiagnostics < status.Diagnostics.Count)
+                    AppendDiagnostic(status.Diagnostics[seenDiagnostics++]);
+
                 if (status.State is SessionState.Completed or SessionState.Failed)
                 {
-                    foreach (var diagnostic in status.Diagnostics)
-                        AppendDiagnostic(diagnostic);
-
                     await launch.CloseAsync(handle, cancellationToken);
                     if (activeSession?.SessionId == handle.SessionId) activeSession = null;
                     monitorCancellation?.Dispose();
@@ -519,7 +520,8 @@ public partial class MainWindow : Window
                 RestoreConfiguration: true,
                 SuppressStaleClosecheckWarning: true,
                 StartupTimeoutSeconds: 600,
-                ShutdownTimeoutSeconds: 45),
+                ShutdownTimeoutSeconds: 45,
+                ContinueWaitingOnStartupTimeout: true),
             Presentation: new SessionPresentationSpec(
                 ManagedSplashCheckBox.IsChecked == true ? SplashMode.Managed : SplashMode.Unset,
                 OptionalValue<string>.Unset,
