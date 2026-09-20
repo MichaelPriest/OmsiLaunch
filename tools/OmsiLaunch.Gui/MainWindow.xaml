@@ -288,6 +288,7 @@
                     </Grid.RowDefinitions>
                     <StackPanel Orientation="Horizontal">
                         <Button x:Name="InstallPluginButton" Content="Instalar / atualizar OmsiLaunch" Click="InstallPlugin_Click"/>
+                        <Button x:Name="UninstallPluginButton" Content="Desinstalar do OMSI" Click="UninstallPlugin_Click"/>
                         <Button Content="Atualizar inventário" Click="RefreshPluginInventory_Click"/>
                     </StackPanel>
 
