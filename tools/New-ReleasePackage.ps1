@@ -21,6 +21,7 @@ Remove-Item -LiteralPath $publicZip, $publicChecksum -Force -ErrorAction Silentl
 New-Item -ItemType Directory -Path $stage, (Join-Path $stage 'plugins'), (Join-Path $stage '.omsilaunch\assets\splash'), (Join-Path $stage '.omsilaunch\docs'), (Join-Path $stage '.omsilaunch\examples') -Force | Out-Null
 
 $cli = Join-Path $root "artifacts\bin\OmsiLaunch.Cli\$Configuration\net6.0-windows"
+$gui = Join-Path $root "artifacts\bin\OmsiLaunch.Gui\$Configuration\net6.0-windows"
 $bootstrapper = Join-Path $root "artifacts\bin\OmsiLaunch.Bootstrapper\$Configuration\OmsiLaunch.exe"
 $netHost = Join-Path $root "artifacts\bin\OmsiLaunch.Bootstrapper\$Configuration\nethost.dll"
 $plugin = Join-Path $root "artifacts\bin\OmsiLaunch.Plugin\x86\$Configuration\net6.0-windows"
@@ -30,6 +31,10 @@ $cliFiles = @(
     'OmsiLaunch.Controller.dll', 'OmsiLaunch.Controller.deps.json', 'OmsiLaunch.Controller.runtimeconfig.json',
     'OmsiLaunch.Api.dll', 'OmsiLaunch.Configuration.dll', 'OmsiLaunch.Content.dll',
     'OmsiLaunch.Core.dll', 'OmsiLaunch.Process.dll', 'OmsiLaunch.Builds.Omsi23004.dll'
+)
+$guiFiles = @(
+    'OmsiLaunch.Launcher.exe', 'OmsiLaunch.Launcher.dll',
+    'OmsiLaunch.Launcher.deps.json', 'OmsiLaunch.Launcher.runtimeconfig.json'
 )
 
 if (-not (Test-Path -LiteralPath $bootstrapper)) { throw "Required controller bootstrapper missing: $bootstrapper" }
@@ -45,6 +50,11 @@ $pluginFiles = @(
 foreach ($file in $cliFiles) {
     $source = Join-Path $cli $file
     if (-not (Test-Path -LiteralPath $source)) { throw "Required CLI artifact missing: $source" }
+    Copy-Item -LiteralPath $source -Destination (Join-Path $stage $file)
+}
+foreach ($file in $guiFiles) {
+    $source = Join-Path $gui $file
+    if (-not (Test-Path -LiteralPath $source)) { throw "Required GUI artifact missing: $source" }
     Copy-Item -LiteralPath $source -Destination (Join-Path $stage $file)
 }
 foreach ($file in $pluginFiles) {
