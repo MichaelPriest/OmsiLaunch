@@ -510,7 +510,12 @@ public partial class MainWindow : Window
                     lastState = status.State;
                     SetStatus(DescribeState(status.State));
                     SessionStateTextBlock.Text = DescribeState(status.State);
-                    SessionPluginTextBlock.Text = status.State >= SessionState.PluginBootstrap ? "Conectado" : "Aguardando";
+                    SessionPluginTextBlock.Text = status.State is SessionState.PluginBootstrap
+                        or SessionState.StartingWorld
+                        or SessionState.EnteringGameplay
+                        or SessionState.Running
+                        ? "Conectado"
+                        : "Aguardando";
                     SessionRuntimeTextBlock.Text = status.State == SessionState.Running ? "Ativo" :
                         status.State is SessionState.Completed or SessionState.Failed ? "Encerrado" : "Preparando";
                     AppendLog("Estado: " + DescribeState(status.State));
