@@ -5,6 +5,7 @@ using System.Windows;
 using Microsoft.Win32;
 using OmsiLaunch.Api;
 using OmsiLaunch.Core;
+using OmsiLaunch.Configuration;
 using OmsiLaunch.Process;
 
 namespace OmsiLaunch.Gui;
@@ -16,6 +17,7 @@ public partial class MainWindow : Window
     private CancellationTokenSource? monitorCancellation;
     private bool allowWindowClose;
     private bool refreshingContent;
+    private bool recoveryPending;
 
     private sealed record Choice(string Display, string Identity);
     private sealed record LauncherSettings(string? OmsiExecutable);
@@ -128,6 +130,7 @@ public partial class MainWindow : Window
                 await LoadEntrypointsAsync();
             }
 
+            await RefreshRecoveryStateAsync(root);
             UpdateActionButtons();
             SetStatus("Pronto");
         }
@@ -176,6 +179,132 @@ public partial class MainWindow : Window
         }
 
         UpdateActionButtons();
+    }
+
+    private async Task RefreshRecoveryStateAsync(string root)
+    {
+        try
+        {
+            var transaction = new FileConfigurationTransaction(root, new Dictionary<string, byte[]>());
+            recoveryPending = await transaction.HasPendingRecoveryAsync();
+            RecoveryButton.IsEnabled = recoveryPending && activeSession is null;
+            if (recoveryPending) AppendLog("Há uma restauração pendente de uma sessão anterior.");
+        }
+        catch (Exception exception)
+        {
+            recoveryPending = false;
+            RecoveryButton.IsEnabled = false;
+            AppendLog("Não foi possível verificar a recuperação pendente: " + exception.Message);
+        }
+    }
+
+    private async void InstallPlugin_Click(object sender, RoutedEventArgs e)
+    {
+        if (activeSession is not null) return;
+
+        try
+        {
+            var root = ResolveInstallationRoot();
+            var sourceDirectory = Path.Combine(AppContext.BaseDirectory, "plugins");
+            var nativeSource = Path.Combine(sourceDirectory, "OmsiLaunch.Native.x86.dll");
+            var artifacts = RuntimeArtifactSet.Load(sourceDirectory, nativeSource);
+
+            var backupRoot = Path.Combine(
+                root,
+                ".omsilaunch",
+                "plugin-backup",
+                DateTime.Now.ToString("yyyyMMdd-HHmmss"));
+
+            var copied = 0;
+            var skipped = 0;
+            foreach (var artifact in artifacts.Artifacts)
+            {
+                var source = Path.GetFullPath(artifact.SourcePath);
+                var destination = Path.GetFullPath(Path.Combine(root, artifact.DestinationRelativePath));
+                Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+
+                if (source.Equals(destination, StringComparison.OrdinalIgnoreCase))
+                {
+                    skipped++;
+                    continue;
+                }
+
+                if (File.Exists(destination))
+                {
+                    var relative = Path.GetRelativePath(root, destination);
+                    var backup = Path.Combine(backupRoot, relative);
+                    Directory.CreateDirectory(Path.GetDirectoryName(backup)!);
+                    File.Copy(destination, backup, true);
+                }
+
+                var temporary = destination + ".omsilaunch-update.tmp";
+                File.Copy(source, temporary, true);
+                File.Move(temporary, destination, true);
+                copied++;
+            }
+
+            artifacts.ValidateInstalled(root);
+            AppendLog($"Plugin validado. {copied} arquivo(s) atualizado(s), {skipped} já estava(m) no destino.");
+            if (Directory.Exists(backupRoot))
+                AppendLog("Backup da versão anterior: " + backupRoot);
+
+            SetStatus("Plugin pronto");
+            await RefreshContentAsync();
+        }
+        catch (Exception exception)
+        {
+            SetStatus("Falha ao instalar plugin");
+            AppendLog("Falha ao instalar/atualizar plugin: " + exception.Message);
+            MessageBox.Show(this,
+                exception.Message,
+                "Falha ao instalar plugin",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+
+    private async void Recovery_Click(object sender, RoutedEventArgs e)
+    {
+        if (activeSession is not null) return;
+
+        try
+        {
+            var root = ResolveInstallationRoot();
+            var transaction = new FileConfigurationTransaction(root, new Dictionary<string, byte[]>());
+            if (!await transaction.HasPendingRecoveryAsync())
+            {
+                recoveryPending = false;
+                RecoveryButton.IsEnabled = false;
+                AppendLog("Nenhuma recuperação pendente foi encontrada.");
+                return;
+            }
+
+            var answer = MessageBox.Show(
+                this,
+                "Uma sessão anterior deixou uma restauração pendente. Restaurar agora os arquivos originais do OMSI?",
+                "Recuperação do OmsiLaunch",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (answer != MessageBoxResult.Yes) return;
+
+            SetStatus("Restaurando arquivos...");
+            await transaction.RestorePendingAsync();
+            recoveryPending = false;
+            RecoveryButton.IsEnabled = false;
+            AppendLog("Recuperação concluída. Os arquivos transacionais foram restaurados.");
+            SetStatus("Recuperação concluída");
+        }
+        catch (Exception exception)
+        {
+            SetStatus("Falha na recuperação");
+            AppendLog("Falha na recuperação: " + exception.Message);
+            MessageBox.Show(this,
+                exception.Message,
+                "Falha na recuperação",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
     }
 
     private async void Validate_Click(object sender, RoutedEventArgs e)
@@ -446,6 +575,8 @@ public partial class MainWindow : Window
         DisableInternetTexturesCheckBox.IsEnabled = !running;
         ValidateButton.IsEnabled = !running;
         LaunchButton.IsEnabled = !running;
+        InstallPluginButton.IsEnabled = !running;
+        RecoveryButton.IsEnabled = !running && recoveryPending;
         StopButton.IsEnabled = running;
     }
 
@@ -455,6 +586,8 @@ public partial class MainWindow : Window
         {
             ValidateButton.IsEnabled = false;
             LaunchButton.IsEnabled = false;
+            InstallPluginButton.IsEnabled = false;
+            RecoveryButton.IsEnabled = false;
             StopButton.IsEnabled = true;
             return;
         }
@@ -463,6 +596,8 @@ public partial class MainWindow : Window
         var hasEntrypoint = LaunchModeComboBox.SelectedIndex == 1 || EntrypointComboBox.SelectedIndex >= 0;
         ValidateButton.IsEnabled = hasContent && hasEntrypoint;
         LaunchButton.IsEnabled = hasContent && hasEntrypoint;
+        InstallPluginButton.IsEnabled = true;
+        RecoveryButton.IsEnabled = recoveryPending;
         StopButton.IsEnabled = false;
     }
 
