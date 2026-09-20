@@ -11,9 +11,10 @@
 
 **OmsiLaunch** is an open-source programmable launch, session-management,
 and runtime-control layer for OMSI 2. It provides a public API, a functional
-CLI, an in-process OMSI plugin/runtime, and an exact-build `BuildProfile`
-boundary. It is infrastructure for launchers, tools, automation, and community
-integrations rather than a graphical launcher.
+CLI, a native Windows graphical launcher, an in-process OMSI plugin/runtime,
+and an exact-build `BuildProfile` boundary. The graphical launcher is intended
+for normal interactive use, while the CLI and API remain available for tools,
+automation, and community integrations.
 
 > **Define the session, not the clicks.**
 
@@ -28,6 +29,21 @@ OmsiLaunch supports semantic session planning with `LaunchSpec` and
 `PlanSession`, startup through `StartSession`, observed runtime control, and
 normal `StopSession`/`CloseSession` cleanup. Supported runtime capabilities are
 explicitly cataloged; experimental and unavailable capabilities are not hidden.
+
+## Graphical launcher
+
+For normal Windows use, open `OmsiLaunch.Launcher.exe`. The WPF interface can:
+
+- locate or remember `Omsi.exe`;
+- browse installed maps and saved situations;
+- select the OMSI-presented entrypoint;
+- validate the exact executable profile before launch;
+- start and stop the managed OMSI session;
+- show lifecycle states, plugin events, and launch diagnostics.
+
+The GUI calls the same `IOmsiLaunch` API as the CLI; it does not build or shell
+out to command-line strings. Keep the launcher open while a managed OMSI session
+is active so it can supervise cleanup and exact configuration restoration.
 
 ## Steam and standalone installations
 
@@ -67,7 +83,8 @@ mode preserves OMSI files.
 
 Extract the package directly into the supported OMSI root. It includes the
 controller, its required dependencies, the permanent plugin closure, splash
-assets, a Release session example, and a small offline user guide.
+assets, the graphical `OmsiLaunch.Launcher.exe`, a Release session example,
+and a small offline user guide.
 
 See [Installation](docs/getting-started/installation.md) and
 [First Session](docs/getting-started/first-session.md). Use
