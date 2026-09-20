@@ -137,6 +137,7 @@ public partial class MainWindow : Window
                 await LoadEntrypointsAsync();
             }
 
+            await RefreshLibraryAsync(installation, root);
             await RefreshRecoveryStateAsync(root);
             UpdateActionButtons();
             SetStatus("Pronto");
@@ -187,6 +188,112 @@ public partial class MainWindow : Window
 
         UpdateActionButtons();
     }
+
+    private async Task RefreshLibraryAsync(InstallationSpec installation, string root)
+    {
+        try
+        {
+            var maps = await launch.DiscoverAsync(installation, ContentQueryKind.Maps);
+            var vehicles = await launch.DiscoverAsync(installation, ContentQueryKind.Vehicles);
+            var hofs = await launch.DiscoverAsync(installation, ContentQueryKind.Hofs);
+            var addons = await launch.DiscoverAsync(installation, ContentQueryKind.Addons);
+
+            var mapChoices = maps.Select(x => new Choice(x.DisplayName ?? x.Identity, x.Identity)).ToArray();
+            var vehicleChoices = vehicles.Select(x => new Choice(x.DisplayName ?? x.Identity, x.Identity)).ToArray();
+            var hofChoices = hofs.Select(x => new Choice(x.DisplayName ?? Path.GetFileName(x.Identity), x.Identity)).ToArray();
+            var addonChoices = addons.Select(x => new Choice(x.DisplayName ?? x.Identity, x.Identity)).ToArray();
+
+            LibraryMapsListBox.ItemsSource = mapChoices;
+            VehiclesListBox.ItemsSource = vehicleChoices;
+            HofsListBox.ItemsSource = hofChoices;
+            AddonsListBox.ItemsSource = addonChoices;
+
+            MapsCountTextBlock.Text = $"{mapChoices.Length} mapa(s)";
+            VehiclesCountTextBlock.Text = $"{vehicleChoices.Length} veículo(s)";
+            HofsCountTextBlock.Text = $"{hofChoices.Length} HOF(s)";
+            AddonsCountTextBlock.Text = addonChoices.Length.ToString();
+
+            InstallationSummaryTextBlock.Text =
+                $"{mapChoices.Length} mapas · {vehicleChoices.Length} veículos · {hofChoices.Length} HOFs · {addonChoices.Length} addons/diretórios detectados";
+
+            RefreshPluginInventory(root);
+        }
+        catch (Exception exception)
+        {
+            AppendLog("Falha ao atualizar biblioteca: " + exception.Message);
+        }
+    }
+
+    private void RefreshPluginInventory(string root)
+    {
+        try
+        {
+            var pluginDirectory = Path.Combine(root, "plugins");
+            var pluginOpl = Path.Combine(pluginDirectory, "OmsiLaunch.Plugin.opl");
+            var runtimeHost = Path.Combine(root, ".omsilaunch", "runtime", "win-x86", "dotnet.exe");
+
+            PluginStatusTextBlock.Text = File.Exists(pluginOpl) ? "Instalado" : "Não instalado";
+            PrivateRuntimeStatusTextBlock.Text = File.Exists(runtimeHost) ? "Disponível" : "Não encontrado";
+
+            PluginFilesListBox.ItemsSource = Directory.Exists(pluginDirectory)
+                ? Directory.EnumerateFiles(pluginDirectory, "OmsiLaunch.*", SearchOption.TopDirectoryOnly)
+                    .Select(path => Path.GetFileName(path))
+                    .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+                    .ToArray()
+                : Array.Empty<string>();
+        }
+        catch (Exception exception)
+        {
+            PluginStatusTextBlock.Text = "Erro ao verificar";
+            PrivateRuntimeStatusTextBlock.Text = "Erro ao verificar";
+            AppendLog("Falha ao inventariar plugins: " + exception.Message);
+        }
+    }
+
+    private async void RefreshPluginInventory_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var root = ResolveInstallationRoot();
+            RefreshPluginInventory(root);
+            var installation = new InstallationSpec(root);
+            var addons = await launch.DiscoverAsync(installation, ContentQueryKind.Addons);
+            var addonChoices = addons.Select(x => new Choice(x.DisplayName ?? x.Identity, x.Identity)).ToArray();
+            AddonsListBox.ItemsSource = addonChoices;
+            AddonsCountTextBlock.Text = addonChoices.Length.ToString();
+            AppendLog("Inventário de plugins/addons atualizado.");
+        }
+        catch (Exception exception)
+        {
+            AppendLog("Falha ao atualizar inventário: " + exception.Message);
+        }
+    }
+
+    private async void LibraryMap_DoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (LibraryMapsListBox.SelectedItem is not Choice selected || activeSession is not null) return;
+
+        try
+        {
+            LaunchModeComboBox.SelectedIndex = 0;
+            var root = ResolveInstallationRoot();
+            var installation = new InstallationSpec(root);
+            var maps = await launch.DiscoverAsync(installation, ContentQueryKind.Maps);
+            var choices = maps.Select(x => new Choice(x.DisplayName ?? x.Identity, x.Identity)).ToArray();
+            ContentComboBox.ItemsSource = choices;
+            var match = choices.FirstOrDefault(x => string.Equals(x.Identity, selected.Identity, StringComparison.OrdinalIgnoreCase));
+            ContentComboBox.SelectedItem = match;
+            MainTabs.SelectedItem = PlayTab;
+            if (match is not null)
+                AppendLog($"Mapa selecionado pela biblioteca: {match.Display}.");
+        }
+        catch (Exception exception)
+        {
+            AppendLog("Falha ao selecionar mapa pela biblioteca: " + exception.Message);
+        }
+    }
+
+    private void ClearLog_Click(object sender, RoutedEventArgs e) => LogTextBox.Clear();
 
     private async Task RefreshRecoveryStateAsync(string root)
     {
@@ -256,6 +363,7 @@ public partial class MainWindow : Window
                 AppendLog("Backup da versão anterior: " + backupRoot);
 
             SetStatus("Plugin pronto");
+            RefreshPluginInventory(root);
             await RefreshContentAsync();
         }
         catch (Exception exception)
@@ -366,6 +474,12 @@ public partial class MainWindow : Window
             var handle = await launch.StartSessionAsync(plan);
             activeSession = handle;
             monitorCancellation = new CancellationTokenSource();
+            SessionIdTextBlock.Text = handle.SessionId.ToString("D");
+            SessionStateTextBlock.Text = "Iniciando";
+            SessionPluginTextBlock.Text = "Aguardando";
+            SessionRuntimeTextBlock.Text = "Preparando";
+            SessionEventsListBox.Items.Clear();
+            SessionDiagnosticsListBox.Items.Clear();
             SetSessionUi(true);
             AppendLog($"Sessão {handle.SessionId:D} iniciada.");
             _ = MonitorSessionAsync(handle, monitorCancellation.Token);
@@ -395,6 +509,10 @@ public partial class MainWindow : Window
                 {
                     lastState = status.State;
                     SetStatus(DescribeState(status.State));
+                    SessionStateTextBlock.Text = DescribeState(status.State);
+                    SessionPluginTextBlock.Text = status.State >= SessionState.PluginBootstrap ? "Conectado" : "Aguardando";
+                    SessionRuntimeTextBlock.Text = status.State == SessionState.Running ? "Ativo" :
+                        status.State is SessionState.Completed or SessionState.Failed ? "Encerrado" : "Preparando";
                     AppendLog("Estado: " + DescribeState(status.State));
                 }
 
@@ -402,11 +520,21 @@ public partial class MainWindow : Window
                 {
                     if (runtimeEvent.Sequence <= lastEventSequence) continue;
                     lastEventSequence = runtimeEvent.Sequence;
+                    var eventText = runtimeEvent.Data.Count == 0
+                        ? runtimeEvent.Type
+                        : runtimeEvent.Type + " · " + string.Join(", ", runtimeEvent.Data.Select(x => x.Key + "=" + x.Value));
+                    SessionEventsListBox.Items.Add(eventText);
+                    SessionEventsListBox.ScrollIntoView(SessionEventsListBox.Items[SessionEventsListBox.Items.Count - 1]);
                     AppendLog("Evento: " + runtimeEvent.Type);
                 }
 
                 while (seenDiagnostics < status.Diagnostics.Count)
-                    AppendDiagnostic(status.Diagnostics[seenDiagnostics++]);
+                {
+                    var diagnostic = status.Diagnostics[seenDiagnostics++];
+                    SessionDiagnosticsListBox.Items.Add(diagnostic.Code + ": " + diagnostic.Message);
+                    SessionDiagnosticsListBox.ScrollIntoView(SessionDiagnosticsListBox.Items[SessionDiagnosticsListBox.Items.Count - 1]);
+                    AppendDiagnostic(diagnostic);
+                }
 
                 if (status.State is SessionState.Completed or SessionState.Failed)
                 {
@@ -415,6 +543,8 @@ public partial class MainWindow : Window
                     monitorCancellation?.Dispose();
                     monitorCancellation = null;
                     SetSessionUi(false);
+                    SessionPluginTextBlock.Text = status.State == SessionState.Completed ? "Finalizado" : "Falhou";
+                    SessionRuntimeTextBlock.Text = "Encerrado";
                     SetStatus(status.State == SessionState.Completed ? "Sessão encerrada" : "Sessão falhou");
                     return;
                 }
