@@ -2,6 +2,26 @@
 
 # Primeira Sessão
 
+## Interface gráfica
+
+Para uso normal no Windows, abra `OmsiLaunch.Launcher.exe`.
+
+Quando o pacote estiver instalado na raiz do OMSI, a interface detecta
+`Omsi.exe` automaticamente. Em uma instalação standalone/manual em outra
+pasta, clique em **Procurar...** uma vez; o caminho escolhido fica salvo nas
+preferências do usuário do Windows.
+
+Escolha **Novo mapa** ou **Situação salva**, selecione o conteúdo e use
+**Validar** antes de **Iniciar OMSI**. O painel de diagnóstico mostra perfil de
+executável incompatível, plugin ausente, falhas de inicialização e os estados da
+sessão.
+
+Mantenha o launcher aberto durante a sessão gerenciada. Se tentar fechá-lo com o
+OMSI ativo, ele perguntará antes de encerrar a sessão com segurança e restaurar
+os arquivos temporários.
+
+## Linha de comando
+
 Na raiz do OMSI, inspecione um exemplo de versão portátil antes de iniciar o OMSI:
 
 ```PowerShell
