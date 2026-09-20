@@ -193,6 +193,7 @@ public sealed class OmsiLaunchService : IOmsiLaunch
         {
             trace.Write("SUPERVISOR_ENTER");
             var deadline = DateTimeOffset.UtcNow.AddSeconds(plan.Spec.Behavior.StartupTimeoutSeconds);
+            var startupTimeoutReported = false;
             string? lastTelemetry = null;
             while (!platform.HasExited(process) && !session.StopRequested)
             {
@@ -206,8 +207,25 @@ public sealed class OmsiLaunchService : IOmsiLaunch
                 if (session.State == SessionState.Failed) break;
                 if (session.State != SessionState.Running && DateTimeOffset.UtcNow >= deadline)
                 {
-                    session.Fail(session.PluginStarted ? "OL_E_STARTUP_TIMEOUT" : "OL_E_PLUGIN_NOT_LOADED", "The requested semantic startup state was not reached before the timeout.");
-                    break;
+                    if (plan.Spec.Behavior.ContinueWaitingOnStartupTimeout)
+                    {
+                        if (!startupTimeoutReported)
+                        {
+                            startupTimeoutReported = true;
+                            var code = session.PluginStarted ? "OL_W_STARTUP_STILL_LOADING" : "OL_W_PLUGIN_STILL_LOADING";
+                            var message = session.PluginStarted
+                                ? "OMSI is still loading after the startup timeout; the interactive session will keep waiting while the process remains alive."
+                                : "OMSI is still running but the plugin has not completed startup; the interactive session will keep waiting and will not terminate the game.";
+                            session.AddDiagnostic(code, message);
+                            trace.Write("STARTUP_TIMEOUT_CONTINUE_WAITING", code);
+                        }
+                        deadline = DateTimeOffset.MaxValue;
+                    }
+                    else
+                    {
+                        session.Fail(session.PluginStarted ? "OL_E_STARTUP_TIMEOUT" : "OL_E_PLUGIN_NOT_LOADED", "The requested semantic startup state was not reached before the timeout.");
+                        break;
+                    }
                 }
                 await Task.Delay(100).ConfigureAwait(false);
             }
