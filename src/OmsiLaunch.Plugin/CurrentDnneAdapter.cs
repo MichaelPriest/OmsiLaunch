@@ -67,6 +67,7 @@ public static class CurrentDnneAdapter
     {
         public bool ValidateBuild(string profileIdentity) => string.Equals(profileIdentity, "Omsi23004_692EBFBF", StringComparison.Ordinal) && NativeValidateBuild() != 0;
         public bool ArmHeadlessStart() => NativeArmHeadlessStart() != 0;
+        public bool RevealStartFormFromHeadless() => NativeRevealStartFormFromHeadless() != 0;
         public int StartNewMap(string mapIdentity, int presentedEntrypointIndex, string entrypointIdentity) => NativeStartNewMap(mapIdentity, presentedEntrypointIndex, entrypointIdentity);
         public int StartSavedSituation(string situationIdentity) => NativeStartSavedSituation(situationIdentity);
         public bool TryGetLastEntrypointSelection(out NativeEntrypointSelection selection)
@@ -81,6 +82,7 @@ public static class CurrentDnneAdapter
         public void InstallMainThreadGateway() => NativeInstallMainThreadGateway();
         [DllImport("OmsiLaunch.Native.x86.dll", CallingConvention = CallingConvention.Cdecl)] private static extern int NativeValidateBuild();
         [DllImport("OmsiLaunch.Native.x86.dll", CallingConvention = CallingConvention.Cdecl)] private static extern int NativeArmHeadlessStart();
+        [DllImport("OmsiLaunch.Native.x86.dll", CallingConvention = CallingConvention.Cdecl)] private static extern int NativeRevealStartFormFromHeadless();
         [DllImport("OmsiLaunch.Native.x86.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)] private static extern int NativeStartNewMap(string mapIdentity, int presentedIndex, string entrypointIdentity);
         [DllImport("OmsiLaunch.Native.x86.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)] private static extern int NativeStartSavedSituation(string situationIdentity);
         [DllImport("OmsiLaunch.Native.x86.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)] private static extern int NativeGetLastEntrypointSelection(out int presentedIndex, out int rawIndex, StringBuilder presentedName, int presentedNameCapacity, StringBuilder rawName, int rawNameCapacity);
