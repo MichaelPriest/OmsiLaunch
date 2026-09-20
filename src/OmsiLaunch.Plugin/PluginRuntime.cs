@@ -8,6 +8,7 @@ public interface IPluginNativeServices
 {
     bool ValidateBuild(string profileIdentity);
     bool ArmHeadlessStart();
+    bool RevealStartFormFromHeadless();
     int StartNewMap(string mapIdentity, int presentedEntrypointIndex, string entrypointIdentity);
     int StartSavedSituation(string situationIdentity);
     bool TryGetLastEntrypointSelection(out NativeEntrypointSelection selection);
@@ -26,6 +27,9 @@ public sealed class PluginRuntime
     private StartupHandoff? pending;
     private CurrentRuntimeCommandMailbox? mailbox;
     private bool executing;
+    private bool headlessRequested;
+    private bool headlessFallbackVisible;
+    private int headlessWaitCount;
     private long lifecycleEventsNotBefore;
     public bool HasPendingWorld => pending is not null;
     public bool HasRuntimeCommandChannel => mailbox is not null;
@@ -44,6 +48,9 @@ public sealed class PluginRuntime
         if ((handoff.WorldMode is not WorldMode.NewMap and not WorldMode.SavedSituation) || handoff.PlayerVehicleEnabled || handoff.DateMode != DateTimeMode.Unset || handoff.TimeMode != DateTimeMode.Unset || (handoff.WorldMode == WorldMode.SavedSituation && string.IsNullOrWhiteSpace(handoff.SituationIdentity))) { Emit("plugin.request.unsupported"); return false; }
         if (!native.ValidateBuild(handoff.BuildProfileId)) { Emit("plugin.build.invalid"); return false; }
         Emit("plugin.build.validated");
+        headlessRequested = handoff.HeadlessStart;
+        headlessFallbackVisible = false;
+        headlessWaitCount = 0;
         if (handoff.HeadlessStart)
         {
             if (!native.ArmHeadlessStart()) { Emit("headless.arm.failed"); return false; }
@@ -74,6 +81,9 @@ public sealed class PluginRuntime
     {
         mailbox = null;
         pending = null;
+        headlessRequested = false;
+        headlessFallbackVisible = false;
+        headlessWaitCount = 0;
         runtimeControl?.Shutdown();
     }
 
@@ -105,7 +115,23 @@ public sealed class PluginRuntime
                 DeferLifecycleEvents();
                 pending = null;
             }
-            else if (result is 3 or 4) { Emit("world.waiting-native-ready", ("native_status", result.ToString())); }
+            else if (result is 3 or 4)
+            {
+                headlessWaitCount++;
+                if (headlessRequested && !headlessFallbackVisible && (result == 3 || headlessWaitCount >= 40))
+                {
+                    if (native.RevealStartFormFromHeadless())
+                    {
+                        headlessFallbackVisible = true;
+                        Emit("headless.fallback-visible", ("native_status", result.ToString()));
+                    }
+                    else
+                    {
+                        Emit("headless.fallback-visible.failed", ("native_status", result.ToString()));
+                    }
+                }
+                Emit("world.waiting-native-ready", ("native_status", result.ToString()));
+            }
             else { Emit("world.failed", ("native_status", result.ToString())); pending = null; }
         }
         finally { executing = false; }
