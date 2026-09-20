@@ -1,0 +1,64 @@
+name: GUI Alpha
+
+on:
+  push:
+    branches:
+      - feature/standalone-installation-support
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 6
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 6.0.x
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Restore managed projects
+        shell: pwsh
+        run: dotnet restore OmsiLaunch.sln
+
+      - name: Build native OMSI bridge x86
+        shell: pwsh
+        run: msbuild src/OmsiLaunch.Native.x86/OmsiLaunch.Native.x86.vcxproj /m /p:Configuration=Release /p:Platform=Win32
+
+      - name: Build controller bootstrapper x64
+        shell: pwsh
+        run: msbuild tools/OmsiLaunch.Bootstrapper/OmsiLaunch.Bootstrapper.vcxproj /m /p:Configuration=Release /p:Platform=x64
+
+      - name: Build CLI x64
+        shell: pwsh
+        run: dotnet build tools/OmsiLaunch.Cli/OmsiLaunch.Cli.csproj -c Release -p:Platform=x64 --no-restore
+
+      - name: Build graphical launcher x64
+        shell: pwsh
+        run: dotnet build tools/OmsiLaunch.Gui/OmsiLaunch.Gui.csproj -c Release -p:Platform=x64 --no-restore
+
+      - name: Build OMSI plugin x86
+        shell: pwsh
+        run: dotnet build src/OmsiLaunch.Plugin/OmsiLaunch.Plugin.csproj -c Release -p:Platform=x86 --no-restore
+
+      - name: Package alpha
+        shell: pwsh
+        run: ./tools/New-ReleasePackage.ps1 -Configuration Release
+
+      - name: Upload alpha package
+        uses: actions/upload-artifact@v4
+        with:
+          name: OmsiLaunch-GUI-alpha
+          path: |
+            artifacts/release/OmsiLaunch-*.zip
+            artifacts/release/OmsiLaunch-*.zip.sha256
+          if-no-files-found: error
