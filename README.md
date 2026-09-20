@@ -32,18 +32,20 @@ explicitly cataloged; experimental and unavailable capabilities are not hidden.
 
 ## Graphical launcher
 
-For normal Windows use, open `OmsiLaunch.Launcher.exe`. The WPF interface can:
+For normal Windows use, open `OmsiLaunch.Launcher.exe`. The WPF launcher is organized as an OMSI control hub with tabs for **Play, Maps, Buses, Session, Plugins, Diagnostics, and Integrations**.
+
+The current GUI can:
 
 - locate or remember `Omsi.exe`;
-- browse installed maps and saved situations;
-- select the OMSI-presented entrypoint;
+- browse installed maps and saved situations and select an OMSI-presented entrypoint;
+- inventory installed vehicles, HOFs, addons/directories, and OmsiLaunch plugin files;
 - validate the exact executable profile before launch;
+- install/update the OmsiLaunch plugin closure;
 - start and stop the managed OMSI session;
-- show lifecycle states, plugin events, and launch diagnostics.
+- display session GUID, lifecycle state, plugin/runtime state, runtime events, and diagnostics;
+- expose the intended integration boundary for independent tools such as OMSI NavBR Multiplayer and OMSI Map Studio.
 
-The GUI calls the same `IOmsiLaunch` API as the CLI; it does not build or shell
-out to command-line strings. Keep the launcher open while a managed OMSI session
-is active so it can supervise cleanup and exact configuration restoration.
+All inventory and session information shown in the launcher comes from the real `IOmsiLaunch` API or the selected OMSI installation; production UI does not use mock content. The GUI calls the same semantic API as the CLI and does not build or shell out to command-line strings. Keep the launcher open while a managed OMSI session is active so it can supervise cleanup and exact configuration restoration.
 
 ## Steam and standalone installations
 
