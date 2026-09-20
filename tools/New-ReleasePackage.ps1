@@ -20,8 +20,18 @@ Remove-Item -LiteralPath $zip -Force -ErrorAction SilentlyContinue
 Remove-Item -LiteralPath $publicZip, $publicChecksum -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Path $stage, (Join-Path $stage 'plugins'), (Join-Path $stage '.omsilaunch\assets\splash'), (Join-Path $stage '.omsilaunch\docs'), (Join-Path $stage '.omsilaunch\examples') -Force | Out-Null
 
-$cli = Join-Path $root "artifacts\bin\OmsiLaunch.Cli\$Configuration\net6.0-windows"
-$gui = Join-Path $root "artifacts\bin\OmsiLaunch.Gui\$Configuration\net6.0-windows"
+function Resolve-ManagedOutput([string] $ProjectName, [string] $Platform, [string] $TargetFramework) {
+    $platformPath = Join-Path $root ("artifacts\bin\" + $ProjectName + "\" + $Platform + "\" + $Configuration + "\" + $TargetFramework)
+    if (Test-Path -LiteralPath $platformPath) { return $platformPath }
+
+    $legacyPath = Join-Path $root ("artifacts\bin\" + $ProjectName + "\" + $Configuration + "\" + $TargetFramework)
+    if (Test-Path -LiteralPath $legacyPath) { return $legacyPath }
+
+    return $platformPath
+}
+
+$cli = Resolve-ManagedOutput 'OmsiLaunch.Cli' 'x64' 'net6.0-windows'
+$gui = Resolve-ManagedOutput 'OmsiLaunch.Gui' 'x64' 'net6.0-windows'
 $bootstrapper = Join-Path $root "artifacts\bin\OmsiLaunch.Bootstrapper\$Configuration\OmsiLaunch.exe"
 $netHost = Join-Path $root "artifacts\bin\OmsiLaunch.Bootstrapper\$Configuration\nethost.dll"
 $plugin = Join-Path $root "artifacts\bin\OmsiLaunch.Plugin\x86\$Configuration\net6.0-windows"
