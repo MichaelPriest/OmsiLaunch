@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <AssemblyName>OmsiLaunch.Gui</AssemblyName>
+    <RootNamespace>OmsiLaunch.Gui</RootNamespace>
+    <ApplicationIcon>..\..\assets\branding\OmsiLaunch.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\OmsiLaunch.Api\OmsiLaunch.Api.csproj" />
+    <ProjectReference Include="..\..\src\OmsiLaunch.Core\OmsiLaunch.Core.csproj" />
+    <ProjectReference Include="..\..\src\OmsiLaunch.Process\OmsiLaunch.Process.csproj" />
+  </ItemGroup>
+</Project>
