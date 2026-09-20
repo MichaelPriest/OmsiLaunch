@@ -158,8 +158,10 @@ if (input.Serve)
     await controlStopped.Task;
     shouldRequestStop = true;
 }
-else if (input.ObserveSecondsSpecified)
+else if (input.ObserveSecondsSpecified || input.RuntimeOperation is not null || input.RuntimeBatch || input.RuntimeWriteBatch || input.D3DBatch)
 {
+    // Explicit observation and validation/one-shot runtime modes retain the
+    // bounded lifecycle used by the test and automation surface.
     await Task.Delay(TimeSpan.FromSeconds(input.ObserveSeconds));
     shouldRequestStop = true;
 }
