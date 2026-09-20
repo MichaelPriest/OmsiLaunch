@@ -1,6 +1,9 @@
 name: GUI Alpha
 
 on:
+  push:
+    branches:
+      - feature/standalone-installation-support
   workflow_dispatch:
 
 permissions:
@@ -26,6 +29,15 @@ jobs:
       - name: Restore managed projects
         shell: pwsh
         run: dotnet restore OmsiLaunch.sln
+
+      - name: Install private .NET 6 runtime x86
+        shell: pwsh
+        run: |
+          $script = Join-Path $env:RUNNER_TEMP 'dotnet-install.ps1'
+          Invoke-WebRequest https://dot.net/v1/dotnet-install.ps1 -OutFile $script
+          & $script -Runtime dotnet -Version 6.0.36 -Architecture x86 -InstallDir artifacts/runtime/win-x86
+          if (-not (Test-Path 'artifacts/runtime/win-x86/dotnet.exe')) { throw 'Private x86 runtime was not installed.' }
+
 
       - name: Build native OMSI bridge x86
         shell: pwsh
