@@ -47,6 +47,8 @@ The current GUI can:
 
 All inventory and session information shown in the launcher comes from the real `IOmsiLaunch` API or the selected OMSI installation; production UI does not use mock content. The GUI calls the same semantic API as the CLI and does not build or shell out to command-line strings. Keep the launcher open while a managed OMSI session is active so it can supervise cleanup and exact configuration restoration.
 
+The Control Hub uses **visible assisted startup by default**: OMSI's normal Start form remains visible while the plugin waits for the profiled map/world state and dispatches the requested map. The original upstream synchronous headless Start hook is still available as an advanced GUI option for automation scenarios. While native readiness is pending, retries are paced rather than issued on the original 1 ms timer.
+
 The Control Hub frontend also provides:
 - instant filtering of installed maps and vehicles without rescanning the installation;
 - installation health checks for the executable, required plugin closure, private x86 .NET runtime, write access, OMSI logfile, and OmsiLaunch diagnostics;
