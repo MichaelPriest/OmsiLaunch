@@ -47,6 +47,12 @@ The current GUI can:
 
 All inventory and session information shown in the launcher comes from the real `IOmsiLaunch` API or the selected OMSI installation; production UI does not use mock content. The GUI calls the same semantic API as the CLI and does not build or shell out to command-line strings. Keep the launcher open while a managed OMSI session is active so it can supervise cleanup and exact configuration restoration.
 
+The Control Hub frontend also provides:
+- instant filtering of installed maps and vehicles without rescanning the installation;
+- installation health checks for the executable, required plugin closure, private x86 .NET runtime, write access, OMSI logfile, and OmsiLaunch diagnostics;
+- creation of a support ZIP containing the OMSI logfile, plugin inventory, recent OmsiLaunch host traces, and a health summary;
+- a live runtime panel while the session is `RUNNING`, reading `map.read`, `time.read`, `weather.read`, and `player-vehicle.read` through the normal session-bound runtime command channel.
+
 ## Steam and standalone installations
 
 OmsiLaunch does not require Steam as a process launcher. The controller starts
