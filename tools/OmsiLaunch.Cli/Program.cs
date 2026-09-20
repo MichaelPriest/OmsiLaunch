@@ -71,10 +71,11 @@ var pluginRuntime = File.Exists(Path.Combine(packagedRuntime, "OmsiLaunch.Plugin
 var nativeRuntime = Path.Combine(pluginRuntime, "OmsiLaunch.Native.x86.dll");
 if (!File.Exists(nativeRuntime)) nativeRuntime = Path.Combine(Directory.GetCurrentDirectory(), "artifacts", "x86", "Debug", "OmsiLaunch.Native.x86.dll");
 IOmsiLaunch launch = new OmsiLaunchService(new CurrentWindowsX64Platform(), new OmsiLaunchRuntimePaths(pluginRuntime, nativeRuntime));
+var spec = await input.BuildSpecAsync();
 
 if (input.Recovery)
 {
-    var transaction = new OmsiLaunch.Configuration.FileConfigurationTransaction(input.Installation!, new Dictionary<string, byte[]>());
+    var transaction = new OmsiLaunch.Configuration.FileConfigurationTransaction(spec.Installation.RootPath, new Dictionary<string, byte[]>());
     var pending = await transaction.HasPendingRecoveryAsync();
     if (input.Recover && pending) await transaction.RestorePendingAsync();
     CliInput.WriteEnvelope("recover", new { pending, recovered = input.Recover && pending }, input.JsonOutput);
