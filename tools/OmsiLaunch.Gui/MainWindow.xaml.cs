@@ -325,7 +325,7 @@ public partial class MainWindow : Window
                 AppendLog(plan.IsRunnable ? "Validação concluída: sessão pronta para iniciar." : "A sessão não está pronta para iniciar.");
 
             foreach (var diagnostic in plan.Diagnostics)
-                AppendLog($"{diagnostic.Code}: {diagnostic.Message}");
+                AppendDiagnostic(diagnostic);
 
             SetStatus(plan.IsRunnable ? "Validado" : "Validação falhou");
             return plan;
@@ -400,7 +400,7 @@ public partial class MainWindow : Window
                 if (status.State is SessionState.Completed or SessionState.Failed)
                 {
                     foreach (var diagnostic in status.Diagnostics)
-                        AppendLog($"{diagnostic.Code}: {diagnostic.Message}");
+                        AppendDiagnostic(diagnostic);
 
                     await launch.CloseAsync(handle, cancellationToken);
                     if (activeSession?.SessionId == handle.SessionId) activeSession = null;
@@ -599,6 +599,14 @@ public partial class MainWindow : Window
         InstallPluginButton.IsEnabled = true;
         RecoveryButton.IsEnabled = recoveryPending;
         StopButton.IsEnabled = false;
+    }
+
+    private void AppendDiagnostic(LaunchDiagnostic diagnostic)
+    {
+        AppendLog($"{diagnostic.Code}: {diagnostic.Message}");
+        if (diagnostic.Data is null || diagnostic.Data.Count == 0) return;
+        foreach (var pair in diagnostic.Data)
+            AppendLog($"  {pair.Key}: {pair.Value}");
     }
 
     private void SetStatus(string text) => StatusTextBlock.Text = text;
