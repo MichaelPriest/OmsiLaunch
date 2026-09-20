@@ -18,7 +18,7 @@ $publicChecksum = $publicZip + '.sha256'
 Remove-Item -LiteralPath $stage -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item -LiteralPath $zip -Force -ErrorAction SilentlyContinue
 Remove-Item -LiteralPath $publicZip, $publicChecksum -Force -ErrorAction SilentlyContinue
-New-Item -ItemType Directory -Path $stage, (Join-Path $stage 'plugins'), (Join-Path $stage '.omsilaunch\assets\splash'), (Join-Path $stage '.omsilaunch\docs'), (Join-Path $stage '.omsilaunch\examples') -Force | Out-Null
+New-Item -ItemType Directory -Path $stage, (Join-Path $stage 'plugins'), (Join-Path $stage '.omsilaunch\assets\splash'), (Join-Path $stage '.omsilaunch\docs'), (Join-Path $stage '.omsilaunch\examples'), (Join-Path $stage '.omsilaunch\runtime\win-x86') -Force | Out-Null
 
 function Resolve-ManagedOutput([string] $ProjectName, [string] $Platform, [string] $TargetFramework) {
     $platformPath = Join-Path $root ("artifacts\bin\" + $ProjectName + "\" + $Platform + "\" + $Configuration + "\" + $TargetFramework)
@@ -37,6 +37,7 @@ $bootstrapper = Join-Path $root "artifacts\bin\OmsiLaunch.Bootstrapper\$Configur
 $netHost = Join-Path $root "artifacts\bin\OmsiLaunch.Bootstrapper\$Configuration\nethost.dll"
 $plugin = Join-Path $root "artifacts\bin\OmsiLaunch.Plugin\x86\$Configuration\net6.0-windows"
 $native = Join-Path $root "artifacts\x86\$Configuration\OmsiLaunch.Native.x86.dll"
+$privateX86Runtime = Join-Path $root "artifacts\runtime\win-x86"
 
 $cliFiles = @(
     'OmsiLaunch.Controller.dll', 'OmsiLaunch.Controller.deps.json', 'OmsiLaunch.Controller.runtimeconfig.json',
@@ -75,6 +76,8 @@ foreach ($file in $pluginFiles) {
 }
 if (-not (Test-Path -LiteralPath $native)) { throw "Required native artifact missing: $native" }
 Copy-Item -LiteralPath $native -Destination (Join-Path $stage 'plugins\OmsiLaunch.Native.x86.dll')
+if (-not (Test-Path -LiteralPath (Join-Path $privateX86Runtime 'dotnet.exe'))) { throw "Required private x86 .NET runtime missing: $privateX86Runtime" }
+Copy-Item -Path (Join-Path $privateX86Runtime '*') -Destination (Join-Path $stage '.omsilaunch\runtime\win-x86') -Recurse -Force
 Copy-Item -Path (Join-Path $cli 'assets\splash\*.bmp') -Destination (Join-Path $stage '.omsilaunch\assets\splash')
 Copy-Item -LiteralPath (Join-Path $root 'examples\release-session.example.json') -Destination (Join-Path $stage '.omsilaunch\examples\release-session.example.json')
 Copy-Item -LiteralPath (Join-Path $root 'LICENSE') -Destination (Join-Path $stage 'LICENSE')
