@@ -101,6 +101,13 @@ public partial class MainWindow : Window
             if (!File.Exists(plugin))
                 AppendLog("Aviso: o plugin OmsiLaunch.Plugin.opl não foi encontrado em plugins\\. A validação da sessão poderá falhar.");
 
+            var privateX86Runtime = Path.Combine(root, ".omsilaunch", "runtime", "win-x86");
+            var privateX86Host = Path.Combine(privateX86Runtime, "dotnet.exe");
+            if (File.Exists(privateX86Host))
+                AppendLog("Runtime .NET 6 x86 privado detectado para o plugin.");
+            else
+                AppendLog("Aviso: runtime .NET x86 privado não encontrado; o plugin dependerá de uma instalação x86 global.");
+
             if (LaunchModeComboBox.SelectedIndex == 1)
             {
                 ContentLabel.Text = "Situação salva";
