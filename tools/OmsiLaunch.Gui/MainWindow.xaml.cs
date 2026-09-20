@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.IO;
+using System.Text.Json;
 using System.Windows;
 using Microsoft.Win32;
 using OmsiLaunch.Api;
@@ -17,6 +18,7 @@ public partial class MainWindow : Window
     private bool refreshingContent;
 
     private sealed record Choice(string Display, string Identity);
+    private sealed record LauncherSettings(string? OmsiExecutable);
 
     public MainWindow()
     {
@@ -32,10 +34,18 @@ public partial class MainWindow : Window
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
         var localOmsi = Path.Combine(AppContext.BaseDirectory, "Omsi.exe");
+        var savedOmsi = LoadSettings()?.OmsiExecutable;
+
         if (File.Exists(localOmsi))
         {
             ExecutablePathTextBox.Text = localOmsi;
             AppendLog("OMSI detectado na mesma pasta do OmsiLaunch.");
+            await RefreshContentAsync();
+        }
+        else if (!string.IsNullOrWhiteSpace(savedOmsi) && File.Exists(savedOmsi))
+        {
+            ExecutablePathTextBox.Text = savedOmsi;
+            AppendLog("Instalação do OMSI restaurada das preferências do launcher.");
             await RefreshContentAsync();
         }
         else
@@ -56,6 +66,7 @@ public partial class MainWindow : Window
 
         if (dialog.ShowDialog(this) != true) return;
         ExecutablePathTextBox.Text = dialog.FileName;
+        SaveSettings(new LauncherSettings(dialog.FileName));
         await RefreshContentAsync();
     }
 
@@ -280,6 +291,13 @@ public partial class MainWindow : Window
         catch (Exception exception)
         {
             AppendLog("Falha ao acompanhar a sessão: " + exception.Message);
+            if (activeSession?.SessionId == handle.SessionId)
+            {
+                try { await launch.CloseAsync(handle, CancellationToken.None); }
+                catch (Exception closeException) { AppendLog("Falha no fechamento seguro: " + closeException.Message); }
+                activeSession = null;
+            }
+            SetSessionUi(false);
             SetStatus("Falha de monitoramento");
         }
     }
@@ -386,6 +404,37 @@ public partial class MainWindow : Window
         return Path.GetDirectoryName(executable)
             ?? throw new InvalidOperationException("Não foi possível determinar a pasta do OMSI.");
     }
+
+    private static LauncherSettings? LoadSettings()
+    {
+        try
+        {
+            var path = SettingsPath();
+            if (!File.Exists(path)) return null;
+            return JsonSerializer.Deserialize<LauncherSettings>(File.ReadAllText(path));
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static void SaveSettings(LauncherSettings settings)
+    {
+        try
+        {
+            var path = SettingsPath();
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            File.WriteAllText(path, JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true }));
+        }
+        catch
+        {
+            // Preferences are optional; a read-only profile must not block launch.
+        }
+    }
+
+    private static string SettingsPath() =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OmsiLaunch", "launcher-settings.json");
 
     private void SetSessionUi(bool running)
     {
