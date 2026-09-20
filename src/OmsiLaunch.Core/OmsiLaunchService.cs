@@ -163,6 +163,15 @@ public sealed class OmsiLaunchService : IOmsiLaunch
             runtime = CurrentRuntimeCommandStore.Create(plan.SessionId);
             session.Move(SessionState.CreatingStartupHandoff); await transaction.MarkStateAsync(TransactionState.HandoffCreated, cancellationToken).ConfigureAwait(false); trace.Write("HANDOFF_CREATED");
             var environment = new Dictionary<string, string> { ["OMSILAUNCH_SESSION_ID"] = plan.SessionId.ToString("D"), ["OMSILAUNCH_HANDOFF_NAME"] = handoff.Name, ["OMSILAUNCH_TELEMETRY_NAME"] = telemetry.Name, ["OMSILAUNCH_RUNTIME_CHANNEL"] = runtime.Name, ["OMSILAUNCH_INTERNET_TEXTURES_MODE"] = plan.Spec.EffectiveInternetTextures.Mode.ToString() };
+            var privateX86Runtime = Path.Combine(plan.Spec.Installation.RootPath, ".omsilaunch", "runtime", "win-x86");
+            if (Directory.Exists(privateX86Runtime))
+            {
+                environment["DOTNET_ROOT_X86"] = privateX86Runtime;
+                environment["DOTNET_ROOT(x86)"] = privateX86Runtime;
+                environment["DOTNET_MULTILEVEL_LOOKUP"] = "0";
+                trace.Write("PRIVATE_X86_DOTNET_RUNTIME_SELECTED", privateX86Runtime);
+            }
+            else trace.Write("PRIVATE_X86_DOTNET_RUNTIME_NOT_FOUND", privateX86Runtime);
             session.Move(SessionState.StartingProcess); trace.Write("PROCESS_CREATE_ENTER");
             var process = await platform.StartAsync(new StartupProcessRequest(Path.Combine(plan.Spec.Installation.RootPath, "Omsi.exe"), plan.Spec.Installation.RootPath, environment), plan.BuildProfileId, cancellationToken).ConfigureAwait(false);
             trace.Write("PROCESS_CREATE_RETURN", process.ProcessId.ToString()); session.Attach(process); trace.Write("PROCESS_OWNERSHIP_REGISTERED"); await transaction.RecordProcessAsync(process.Identity.ProcessId, process.Identity.CreationTimeUtc, process.Identity.ExecutablePath, cancellationToken).ConfigureAwait(false); trace.Write("JOURNAL_PROCESS_STARTED"); session.Move(SessionState.WaitingForPlugin);
