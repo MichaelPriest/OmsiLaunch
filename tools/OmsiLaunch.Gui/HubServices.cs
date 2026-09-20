@@ -189,7 +189,7 @@ internal static class HubServices
     private static bool IsOmsiRunning(string root)
     {
         var expected = Path.Combine(root, "Omsi.exe");
-        foreach (var process in Process.GetProcessesByName("Omsi"))
+        foreach (var process in System.Diagnostics.Process.GetProcessesByName("Omsi"))
         {
             try
             {
@@ -299,7 +299,7 @@ internal static class HubServices
         lines.Add("del /f /q \"%~f0\" >nul 2>&1");
 
         File.WriteAllLines(script, lines, Encoding.ASCII);
-        Process.Start(new ProcessStartInfo
+        System.Diagnostics.Process.Start(new ProcessStartInfo
         {
             FileName = "cmd.exe",
             Arguments = "/c \"" + script + "\"",
