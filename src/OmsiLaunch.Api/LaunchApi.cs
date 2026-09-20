@@ -76,7 +76,8 @@ public sealed record LaunchBehaviorSpec(
     bool SuppressStaleClosecheckWarning = true,
     int StartupTimeoutSeconds = 180,
     int ShutdownTimeoutSeconds = 30,
-    bool ContinueWaitingOnStartupTimeout = false);
+    bool ContinueWaitingOnStartupTimeout = false,
+    bool HeadlessStart = true);
 public sealed record LaunchSpec(InstallationSpec Installation, WorldSpec World, DateSpec Date, TimeSpec Time, OptionalValue<PlayerVehicleSpec> PlayerVehicle, EnvironmentSpec Environment, LaunchBehaviorSpec Behavior, YearSpec? Year = null, WeatherSpec? Weather = null, InputSpec? Input = null, DiagnosticsSpec? Diagnostics = null, SessionPresentationSpec? Presentation = null, InternetTexturesSpec? InternetTextures = null)
 {
     public YearSpec EffectiveYear => Year ?? new(DateTimeMode.Unset, OptionalValue<int>.Unset);
