@@ -26,3 +26,14 @@ location:
 The normal OmsiLaunch plugin closure must still be installed under that OMSI
 root. Remove `/plan` after the plan reports `READY`. An unsupported executable
 fingerprint is rejected before the OMSI process is created.
+
+
+## Session lifetime
+
+A normal launch now remains active until OMSI itself is closed. The CLI no
+longer stops a successful interactive session after the old eight-second
+observation window.
+
+For automated validation, test, or one-shot runtime operations, the bounded
+lifecycle is retained. You can also request it explicitly with
+`/observe-seconds:<n>`.
