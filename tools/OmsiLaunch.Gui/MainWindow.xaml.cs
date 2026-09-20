@@ -530,6 +530,84 @@ public partial class MainWindow : Window
         }
     }
 
+    private async void UninstallPlugin_Click(object sender, RoutedEventArgs e)
+    {
+        if (activeSession is not null)
+        {
+            MessageBox.Show(this,
+                "Encerre a sessão ativa antes de desinstalar o OmsiLaunch.",
+                "OmsiLaunch",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+
+        var answer = MessageBox.Show(
+            this,
+            "Desinstalar o OmsiLaunch da pasta selecionada do OMSI?\n\n" +
+            "Serão removidos apenas os componentes do OmsiLaunch. Omsi.exe, mapas, ônibus e plugins de terceiros não serão removidos. " +
+            "Backups e diagnósticos importantes serão preservados fora da pasta do OMSI.",
+            "Desinstalar OmsiLaunch",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (answer != MessageBoxResult.Yes) return;
+
+        try
+        {
+            SetStatus("Desinstalando OmsiLaunch...");
+            UninstallPluginButton.IsEnabled = false;
+            InstallPluginButton.IsEnabled = false;
+
+            var root = ResolveInstallationRoot();
+            var result = await HubServices.UninstallFromOmsiAsync(root, AppContext.BaseDirectory);
+
+            AppendLog($"Desinstalação concluída. {result.RemovedFiles} arquivo(s) de plugin removido(s).");
+            if (!string.IsNullOrWhiteSpace(result.PreservedDataPath))
+                AppendLog("Backups/diagnósticos preservados em: " + result.PreservedDataPath);
+
+            if (result.DeferredSelfRemoval)
+            {
+                AppendLog("A limpeza final dos arquivos do launcher ocorrerá após o fechamento desta janela.");
+                MessageBox.Show(this,
+                    "O OmsiLaunch foi removido da instalação.\n\nA interface será fechada agora para concluir a remoção dos próprios arquivos da pasta do OMSI.",
+                    "Desinstalação concluída",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+                allowWindowClose = true;
+                Close();
+                return;
+            }
+
+            RefreshPluginInventory(root);
+            HealthChecksListBox.ItemsSource = HubServices.ScanInstallation(root);
+            SetStatus("OmsiLaunch desinstalado");
+            MessageBox.Show(this,
+                "Os componentes do OmsiLaunch foram removidos da pasta do OMSI.",
+                "Desinstalação concluída",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        catch (Exception exception)
+        {
+            AppendLog("Falha ao desinstalar: " + exception.Message);
+            SetStatus("Falha na desinstalação");
+            MessageBox.Show(this,
+                exception.Message,
+                "Falha ao desinstalar",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+        finally
+        {
+            if (!allowWindowClose)
+            {
+                UninstallPluginButton.IsEnabled = activeSession is null;
+                InstallPluginButton.IsEnabled = activeSession is null;
+            }
+        }
+    }
+
     private async void Recovery_Click(object sender, RoutedEventArgs e)
     {
         if (activeSession is not null) return;
@@ -927,6 +1005,7 @@ public partial class MainWindow : Window
         ValidateButton.IsEnabled = !running;
         LaunchButton.IsEnabled = !running;
         InstallPluginButton.IsEnabled = !running;
+        UninstallPluginButton.IsEnabled = !running;
         RecoveryButton.IsEnabled = !running && recoveryPending;
         StopButton.IsEnabled = running;
         if (!running) RefreshLiveButton.IsEnabled = false;
@@ -939,6 +1018,7 @@ public partial class MainWindow : Window
             ValidateButton.IsEnabled = false;
             LaunchButton.IsEnabled = false;
             InstallPluginButton.IsEnabled = false;
+            UninstallPluginButton.IsEnabled = false;
             RecoveryButton.IsEnabled = false;
             StopButton.IsEnabled = true;
             return;
@@ -949,6 +1029,7 @@ public partial class MainWindow : Window
         ValidateButton.IsEnabled = hasContent && hasEntrypoint;
         LaunchButton.IsEnabled = hasContent && hasEntrypoint;
         InstallPluginButton.IsEnabled = true;
+        UninstallPluginButton.IsEnabled = true;
         RecoveryButton.IsEnabled = recoveryPending;
         StopButton.IsEnabled = false;
     }
